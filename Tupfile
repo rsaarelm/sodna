@@ -1,0 +1,12 @@
+CFLAGS += -Iinclude
+CFLAGS += -Wall -Werror
+CFLAGS += -O3
+
+CC = gcc
+
+.gitignore
+
+: src_sdl2/sodna_sdl2.c |> $(CC) $(CFLAGS) -fPIC -I/usr/include/SDL2 -c %f -o %o |> %B.o
+: sodna_sdl2.o |> $(CC) %f -shared -o libsodna_sdl2.so $(LDFLAGS) |> libsodna_sdl2.so
+
+: src_demo/demo.c libsodna_sdl2.so  |> $(CC) -L. -lSDL2 -lsodna_sdl2 $(CFLAGS) $(LDFLAGS) %f -lsodna_sdl2 -o demo |> demo
