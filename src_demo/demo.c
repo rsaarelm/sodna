@@ -1,8 +1,11 @@
 #include "sodna.h"
 
 int main(int argc, char* argv[]) {
+    sodna_Cell* cells;
     sodna_init();
-    sodna_set(10, 10, sodna_map_color(255, 0, 0), sodna_map_color(0, 0, 0), '@');
+    cells = sodna_cells();
+    cells[0].fore_r = 15;
+    cells[0].symbol = 'A';
     sodna_flush();
     sodna_wait_event();
     return 0;

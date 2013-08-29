@@ -1,6 +1,8 @@
 #ifndef _SODNA_H
 #define _SODNA_H
 
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -27,19 +29,17 @@ int sodna_width();
  */
 int sodna_height();
 
-/**
- * \brief Convert a color value into the terminal's internal
- * representation.
- */
-int sodna_map_color(unsigned char r, unsigned char g, unsigned char b);
+typedef struct {
+    unsigned int symbol: 8;
+    unsigned int fore_r: 4;
+    unsigned int fore_g: 4;
+    unsigned int fore_b: 4;
+    unsigned int back_r: 4;
+    unsigned int back_g: 4;
+    unsigned int back_b: 4;
+} sodna_Cell;
 
-/**
- * \brief Set the symbol and color in a given terminal cell.
- *
- * The color values must be in the terminal's internal
- * representation given by a sodna_map_color call.
- */
-void sodna_set(int x, int y, int fore_color, int back_color, int symbol);
+sodna_Cell* sodna_cells();
 
 /**
  * \brief Display the terminal with the changes.
