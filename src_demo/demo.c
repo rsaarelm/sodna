@@ -1,31 +1,39 @@
 #include "sodna.h"
 #include <string.h>
 #include <stdlib.h>
-#include <math.h>
 
-const float pi = 3.14159;
+static uint8_t flame_buffer[27][82];
 
-sodna_Cell plasma(float t, float x, float y) {
-    float v = 0.f;
-    v += sin(x + t);
-    v += sin((y + t) / 2.f);;
-    v += sin((x + y + t) / 2.f);;
-
-    return (sodna_Cell){ '5' + 5.f * sin(pi * v), 15, 15, 15, 15, 15 * sin(pi * v), 15 * cos(pi * v)};
+void update_flame() {
+    int x, y;
+    for (x = 0; x < 82; x++) {
+        flame_buffer[26][x] = rand() % 3 ? 0 : 255;
+    }
+    for (y = 0; y < 26; y++) {
+        for (x = 1; x < 81; x++) {
+            int sum = flame_buffer[y][x-1] + flame_buffer[y][x+1];
+            sum += flame_buffer[y+1][x-1] + flame_buffer[y+1][x] + flame_buffer[y+1][x+1];
+            sum /= 5;
+            flame_buffer[y][x] = sum;
+        }
+    }
 }
 
 void chaos() {
     // Test non-blocking animation.
-    float t = 0.f;
     for (;;) {
         int x, y;
+        update_flame();
         for (y = 0; y < sodna_height(); y++) {
             for (x = 0; x < sodna_width(); x++) {
+                int i = flame_buffer[y][x+1] / 8;
+                int r = i > 15 ? 15 : i;
+                int g = i > 15 ? i - 16 : 0;
+                int b = 0;
                 sodna_cells()[x + sodna_width() * y] =
-                    plasma(t, (float)x / sodna_width(), (float)y / sodna_height());
+                    (sodna_Cell){ ' ', 0, 0, 0, r, g, b };
             }
         }
-        t += 0.01f;
         sodna_flush();
         if (sodna_poll_event())
             break;
