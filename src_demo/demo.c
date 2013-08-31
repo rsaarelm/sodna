@@ -47,16 +47,16 @@ const char* terrain[] = {
     "####  ####"};
 
 void draw_map(int player_x, int player_y) {
-    const sodna_Cell wall =   { '#', 9,  9,  9, 0, 2, 1 };
-    const sodna_Cell floor =  { ' ', 9,  9,  9, 0, 2, 1 };
-    const sodna_Cell player = { '@', 8, 13, 15, 0, 2, 1 };
+    const sodna_Cell wall =   { '#', 9,  9,  9, 0, 0, 0 };
+    const sodna_Cell floor =  { ' ', 9,  9,  9, 0, 0, 0 };
+    const sodna_Cell player = { '@', 8, 13, 15, 0, 0, 0 };
     int y;
     sodna_Cell* cells = sodna_cells();
 
     for (y = 0; y < sizeof(terrain)/sizeof(char*); y++) {
         int x = 0;
         do {
-            int offset = y * sodna_width() + x;
+            int offset = y * sodna_width() + x * 2;
             if (x == player_x && y == player_y) {
                 cells[offset] = player;
             } else {
