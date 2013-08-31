@@ -1,6 +1,38 @@
 #include "sodna.h"
 #include <string.h>
 #include <stdlib.h>
+#include <math.h>
+
+const float pi = 3.14159;
+
+sodna_Cell plasma(float t, float x, float y) {
+    float v = 0.f;
+    v += sin(x + t);
+    v += sin((y + t) / 2.f);;
+    v += sin((x + y + t) / 2.f);;
+
+    return (sodna_Cell){ '5' + 5.f * sin(pi * v), 15, 15, 15, 15, 15 * sin(pi * v), 15 * cos(pi * v)};
+}
+
+void chaos() {
+    // Test non-blocking animation.
+    float t = 0.f;
+    for (;;) {
+        int x, y;
+        for (y = 0; y < sodna_height(); y++) {
+            for (x = 0; x < sodna_width(); x++) {
+                sodna_cells()[x + sodna_width() * y] =
+                    plasma(t, (float)x / sodna_width(), (float)y / sodna_height());
+            }
+        }
+        t += 0.01f;
+        sodna_flush();
+        if (sodna_poll_event())
+            break;
+    }
+
+    memset(sodna_cells(), 0, sodna_width() * sodna_height() * sizeof(sodna_Cell));
+}
 
 const char* terrain[] = {
     "####  ####",
@@ -38,24 +70,8 @@ int can_enter(int x, int y) {
     return x >= 0 && y >= 0 && y < sizeof(terrain)/sizeof(char*) && x < strlen(terrain[y]) && terrain[y][x] != '#';
 }
 
-int main(int argc, char* argv[]) {
+void simpleRl() {
     int x = 2, y = 2;
-    sodna_init();
-
-    // Test non-blocking animation.
-    for (;;) {
-        int i = sodna_width() * sodna_height() + 1;
-        while (i) {
-            uint32_t* cells = (uint32_t*)sodna_cells();
-            cells[--i] = rand();
-        }
-        sodna_flush();
-        if (sodna_poll_event())
-            break;
-    }
-
-    memset(sodna_cells(), 0, sodna_width() * sodna_height() * sizeof(sodna_Cell));
-
     for (;;) {
         int dx = 0, dy = 0;
         draw_map(x, y);
@@ -63,7 +79,7 @@ int main(int argc, char* argv[]) {
         switch (sodna_wait_event()) {
             case SODNA_CLOSE_WINDOW:
             case SODNA_ESC:
-                goto exit;
+                return;
             case SODNA_UP:
             case 'w':
                 dy = -1;
@@ -89,6 +105,12 @@ int main(int argc, char* argv[]) {
             y += dy;
         }
     }
-exit:
+}
+
+int main(int argc, char* argv[]) {
+    sodna_init();
+    chaos();
+    simpleRl();
+    sodna_exit();
     return 0;
 }
