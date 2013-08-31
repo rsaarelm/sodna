@@ -61,6 +61,14 @@ int sodna_width();
  */
 int sodna_height();
 
+/**
+ * \brief Terminal cell data structure.
+ *
+ * Each cell has an 8-bit ASCII symbol value, a 12-bit foreground color and a
+ * 12-bit background color (each color channel can have a value from 0 to 15).
+ * The entire structure fits in one 32-bit machine word, so it can be passed
+ * around as value.
+ */
 typedef struct {
     unsigned int symbol: 8;
     unsigned int fore_r: 4;
