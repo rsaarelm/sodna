@@ -10,7 +10,7 @@ static sodna_Cell* g_cells = NULL;
 const int width = 640;
 const int height = 400;
 
-// TODO support different fonts and font sizes.
+/* TODO support different fonts and font sizes. */
 const int font_w = 8;
 const int font_h = 16;
 const uint8_t font[] = {
@@ -18,7 +18,7 @@ const uint8_t font[] = {
 };
 
 static inline int font_pixel(uint8_t symbol, int x, int y) {
-    // XXX: Only handles font_w == 8 for now.
+    /* XXX: Only handles font_w == 8 for now. */
     return font[symbol * font_h + y] & (1 << (7 - x));
 }
 
@@ -78,9 +78,10 @@ void draw_cell(int x, int y, Uint32 fore_col, Uint32 back_col, uint8_t symbol) {
 void sodna_flush() {
     int x, y;
     sodna_Cell* cells = sodna_cells();
-    // XXX: Always repaints all cells, even if there was no change from
-    // previous frame. Could use a twin cell buffer and check for change
-    // from previous frame to see if we can skip draw_cell.
+    /* XXX: Always repaints all cells, even if there was no change from
+     * previous frame. Could use a twin cell buffer and check for change
+     * from previous frame to see if we can skip draw_cell.
+     */
     for (y = 0; y < sodna_height(); y++)
         for (x = 0; x < sodna_width(); x++) {
             Uint32 fore, back;
@@ -102,12 +103,111 @@ int sodna_height() {
     return height / font_h;
 }
 
+static int process_event(SDL_Event* event) {
+    int key = 0;
+    if (event->type == SDL_WINDOWEVENT) {
+        sodna_flush();
+    }
+    if (event->type == SDL_QUIT) {
+        return SODNA_CLOSE_WINDOW;
+    }
+
+    /* Can't handle this event. */
+    if (event->type != SDL_KEYDOWN)
+        return 0;
+
+    key = event->key.keysym.sym;
+    /* Printable stuff. */
+    if (key >= 32 && key < 128)
+        return key;
+
+    switch (key) {
+        case SDLK_UP:
+        case SDLK_KP_8:
+            return SODNA_UP;
+        case SDLK_DOWN:
+        case SDLK_KP_2:
+            return SODNA_DOWN;
+        case SDLK_LEFT:
+        case SDLK_KP_4:
+            return SODNA_LEFT;
+        case SDLK_RIGHT:
+        case SDLK_KP_6:
+            return SODNA_RIGHT;
+        case SDLK_HOME:
+        case SDLK_KP_7:
+            return SODNA_HOME;
+        case SDLK_END:
+        case SDLK_KP_1:
+            return SODNA_END;
+        case SDLK_KP_5:
+            return SODNA_KP5;
+        case SDLK_BACKSPACE:
+        case SDLK_KP_BACKSPACE:
+            return SODNA_BACKSPACE;
+        case SDLK_TAB:
+        case SDLK_KP_TAB:
+            return SODNA_TAB;
+        case SDLK_RETURN:
+        case SDLK_KP_ENTER:
+            return SODNA_ENTER;
+        case SDLK_PAGEUP:
+        case SDLK_KP_9:
+            return SODNA_PAGEUP;
+        case SDLK_PAGEDOWN:
+        case SDLK_KP_3:
+            return SODNA_PAGEDOWN;
+        case SDLK_INSERT:
+            return SODNA_INSERT;
+        case SDLK_DELETE:
+            return SODNA_DEL;
+        case SDLK_F1:
+            return SODNA_F1;
+        case SDLK_F2:
+            return SODNA_F2;
+        case SDLK_F3:
+            return SODNA_F3;
+        case SDLK_F4:
+            return SODNA_F4;
+        case SDLK_F5:
+            return SODNA_F5;
+        case SDLK_F6:
+            return SODNA_F6;
+        case SDLK_F7:
+            return SODNA_F7;
+        case SDLK_F8:
+            return SODNA_F8;
+        case SDLK_F9:
+            return SODNA_F9;
+        case SDLK_F10:
+            return SODNA_F10;
+        case SDLK_F11:
+            return SODNA_F11;
+        case SDLK_F12:
+            return SODNA_F12;
+        case SDLK_ESCAPE:
+            return SODNA_ESC;
+    }
+    return 0;
+}
+
 int sodna_wait_event() {
     SDL_Event event;
-    do {
+    for (;;) {
+        int ret;
         SDL_WaitEvent(&event);
-    } while (event.type != SDL_KEYDOWN);
+        ret = process_event(&event);
+        if (ret)
+            return ret;
+    }
+    /* Shouldn't get here. */
+    return 0;
+}
 
-    // TODO
+int sodna_poll_event() {
+    SDL_Event event;
+    if (SDL_PollEvent(&event)) {
+        return process_event(&event);
+    }
     return 0;
 }
