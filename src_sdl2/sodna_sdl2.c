@@ -33,12 +33,13 @@ int sodna_init() {
 
     g_win = SDL_CreateWindow(
             "", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-            width, height, SDL_WINDOW_SHOWN);
+            width, height, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
     if (!g_win)
         return 1;
 
     g_rend = SDL_CreateRenderer(g_win, -1,
             SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    SDL_RenderSetLogicalSize(g_rend, width, height);
 
     g_texture = SDL_CreateTexture(
             g_rend, SDL_PIXELFORMAT_ARGB8888,
