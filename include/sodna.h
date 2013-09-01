@@ -71,12 +71,12 @@ int sodna_height();
  */
 typedef struct {
     unsigned int symbol: 8;
-    unsigned int fore_r: 4;
-    unsigned int fore_g: 4;
     unsigned int fore_b: 4;
-    unsigned int back_r: 4;
-    unsigned int back_g: 4;
+    unsigned int fore_g: 4;
+    unsigned int fore_r: 4;
     unsigned int back_b: 4;
+    unsigned int back_g: 4;
+    unsigned int back_r: 4;
 } sodna_Cell;
 
 sodna_Cell* sodna_cells();

@@ -31,7 +31,7 @@ void chaos() {
                 int g = i > 15 ? i - 16 : 0;
                 int b = 0;
                 sodna_cells()[x + sodna_width() * y] =
-                    (sodna_Cell){ ' ', 0, 0, 0, r, g, b };
+                    (sodna_Cell){ ' ', 0, 0, 0, b, g, r };
             }
         }
         sodna_flush();
@@ -57,7 +57,7 @@ const char* terrain[] = {
 void draw_map(int player_x, int player_y) {
     const sodna_Cell wall =   { '#', 9,  9,  9, 0, 0, 0 };
     const sodna_Cell floor =  { ' ', 9,  9,  9, 0, 0, 0 };
-    const sodna_Cell player = { '@', 8, 13, 15, 0, 0, 0 };
+    const sodna_Cell player = { '@', 15, 13, 8, 0, 0, 0 };
     int y;
     sodna_Cell* cells = sodna_cells();
 
