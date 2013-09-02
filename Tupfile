@@ -9,4 +9,4 @@ CC = gcc
 : src_sdl2/sodna_sdl2.c |> $(CC) $(CFLAGS) -fPIC `sdl2-config --cflags` -c %f -o %o |> %B.o
 : sodna_sdl2.o |> $(CC) %f -shared -o libsodna_sdl2.so $(LDFLAGS) |> libsodna_sdl2.so
 
-: src_demo/demo.c libsodna_sdl2.so  |> $(CC) -L. -lsodna_sdl2 $(CFLAGS) $(LDFLAGS) %f -lsodna_sdl2 `sdl2-config --libs` -o demo |> demo
+: src_demo/demo.c libsodna_sdl2.so  |> $(CC) -L. -lsodna_sdl2 $(CFLAGS) $(LDFLAGS) %f -lsodna_sdl2 `sdl2-config --libs` -Wl,-rpath=. -o demo |> demo
