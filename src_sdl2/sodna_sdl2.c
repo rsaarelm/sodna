@@ -146,8 +146,26 @@ void draw_cell(int x, int y, Uint32 fore_col, Uint32 back_col, uint8_t symbol) {
     for (v = 0; v < g_font_h; v++) {
         size_t offset = x + (y + v) * window_w();
         for (u = 0; u < g_font_w; u++) {
-            // TODO: Interpolate colors on font grayscale.
-            g_pixels[offset++] = g_font[font_offset(symbol, u, v)] ? fore_col : back_col;
+            uint8_t col = g_font[font_offset(symbol, u, v)];
+            int i, b, f;
+            switch (col) {
+                case 0:
+                    g_pixels[offset++] = back_col;
+                    break;
+                default:
+                    // Interpolate between background and foreground.
+                    g_pixels[offset] = 0;
+                    for (i = 0; i < 32; i += 8) {
+                        b = (back_col >> i) % 0xff;
+                        f = (fore_col >> i) % 0xff;
+                        g_pixels[offset] |= (b + (f - b) * col / 255) << i;
+                    }
+                    ++offset;
+                    break;
+                case 255:
+                    g_pixels[offset++] = fore_col;
+                    break;
+            }
         }
     }
 }
