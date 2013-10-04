@@ -31,6 +31,10 @@ int sodna_init(
         int font_width, int font_height,
         int num_columns, int num_rows,
         const char* window_title) {
+    // Already initialized.
+    if (g_win)
+        return 1;
+
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
         return 1;
 
