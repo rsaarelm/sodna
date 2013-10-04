@@ -56,6 +56,9 @@ int sodna_init(
         int font_width, int font_height,
         int num_columns, int num_rows,
         const char* window_title) {
+    if (font_width < 1 || font_height < 1 || num_columns < 1 || num_rows < 1)
+        return 1;
+
     g_font_w = font_width;
     g_font_h = font_height;
     g_columns = num_columns;
