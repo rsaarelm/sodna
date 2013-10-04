@@ -116,7 +116,7 @@ void simpleRl() {
 }
 
 int main(int argc, char* argv[]) {
-    sodna_init();
+    sodna_init(8, 16, 80, 25, "Sodna demo");
     chaos();
     simpleRl();
     sodna_exit();

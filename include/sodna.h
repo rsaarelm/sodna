@@ -44,12 +44,27 @@ enum Key {
  *
  * \return Zero on success, nonzero on error
  */
-int sodna_init();
+int sodna_init(
+        int font_width,
+        int font_height,
+        int num_columns,
+        int num_rows,
+        const char* window_title);
 
 /**
  * \brief Shut down the running terminal.
  */
 void sodna_exit();
+
+int sodna_font_width();
+
+int sodna_font_height();
+
+void sodna_load_font_data(
+        uint8_t* pixels,
+        int pixels_width,
+        int pixels_height,
+        int first_char);
 
 /**
  * \brief Get the width in columns of the terminal window.

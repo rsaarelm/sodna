@@ -27,12 +27,15 @@ static inline void cell_to_argb(Uint32* out_fore, Uint32* out_back, sodna_Cell c
     *out_back = 0xff000000 | cell.back_r << 20 | cell.back_g << 12 | cell.back_b << 4;
 }
 
-int sodna_init() {
+int sodna_init(
+        int font_width, int font_height,
+        int num_columns, int num_rows,
+        const char* window_title) {
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
         return 1;
 
     g_win = SDL_CreateWindow(
-            "", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+            window_title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
             width, height, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
     if (!g_win)
         return 1;
