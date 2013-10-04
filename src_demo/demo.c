@@ -2,6 +2,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "stb_image.c"
+
 static sodna_Cell cell(char c, int fore, int back) {
     return (sodna_Cell) { c, fore >> 8, fore >> 4, fore, back >> 8, back >> 4, back };
 }
@@ -128,7 +130,16 @@ void simpleRl() {
 }
 
 int main(int argc, char* argv[]) {
-    sodna_init(8, 16, 80, 25, "Sodna demo");
+    int w, h, n;
+    uint8_t* data = stbi_load("8x12.png", &w, &h, &n, 1);
+    sodna_init(8, 12, 80, 25, "Sodna demo");
+    if (data) {
+        sodna_load_font_data(data, w, h, 0);
+    } else {
+        fprintf(stderr, "Couldn't load font bitmap: %s\n",
+                stbi_failure_reason());
+    }
+    stbi_image_free(data);
     chaos();
     simpleRl();
     sodna_exit();
