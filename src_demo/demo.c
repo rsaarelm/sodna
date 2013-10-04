@@ -2,6 +2,10 @@
 #include <string.h>
 #include <stdlib.h>
 
+static sodna_Cell cell(char c, int fore, int back) {
+    return (sodna_Cell) { c, fore >> 8, fore >> 4, fore, back >> 8, back >> 4, back };
+}
+
 static uint8_t flame_buffer[27][82];
 
 void update_flame() {
@@ -55,14 +59,14 @@ const char* terrain[] = {
     "####  ####"};
 
 void draw_map(int player_x, int player_y) {
-    const sodna_Cell wall =   { '#', 9,  9,  9, 0, 0, 0 };
-    const sodna_Cell floor =  { ' ', 9,  9,  9, 0, 0, 0 };
-    const sodna_Cell player = { '@', 15, 13, 8, 0, 0, 0 };
-    int y;
+    const sodna_Cell wall = cell('#', 0x999, 0x000);
+    const sodna_Cell floor =  cell(' ', 0x999, 0x000);
+    const sodna_Cell player = cell('@', 0xFD8, 0x000);
+    int x, y;
     sodna_Cell* cells = sodna_cells();
 
     for (y = 0; y < sizeof(terrain)/sizeof(char*); y++) {
-        int x = 0;
+        x = 0;
         do {
             int offset = y * sodna_width() + x * 2;
             if (x == player_x && y == player_y) {
@@ -72,6 +76,14 @@ void draw_map(int player_x, int player_y) {
             }
         } while (terrain[y][++x]);
     }
+
+    for (y = 0; y < 16; y++) {
+        for (x = 0; x < 16; x++) {
+            int offset = y * sodna_width() + 60 + x;
+            cells[offset] = cell(x + 16*y, 0x280, 0x000);
+        }
+    }
+
 }
 
 int can_enter(int x, int y) {
