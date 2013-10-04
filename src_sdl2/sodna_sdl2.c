@@ -6,20 +6,37 @@ static SDL_Renderer* g_rend = NULL;
 static SDL_Texture* g_texture = NULL;
 static Uint32* g_pixels = NULL;
 static sodna_Cell* g_cells = NULL;
+static uint8_t* g_font = NULL;
 
-const int width = 640;
-const int height = 400;
+static int g_columns;
+static int g_rows;
+static int g_font_w;
+static int g_font_h;
 
-/* TODO support different fonts and font sizes. */
-const int font_w = 8;
-const int font_h = 16;
-const uint8_t font[] = {
-#include "font16.inc"
+const uint8_t font8[] = {
+#include "font8.inc"
 };
 
-static inline int font_pixel(uint8_t symbol, int x, int y) {
-    /* XXX: Only handles font_w == 8 for now. */
-    return font[symbol * font_h + y] & (1 << (7 - x));
+static inline uint8_t default_font_pixel(uint8_t symbol, int x, int y) {
+    return font8[symbol * 8 + y] & (1 << (7 - x));
+}
+
+static inline size_t font_offset(uint8_t symbol, int x, int y) {
+    return symbol * g_font_w * g_font_h + y * g_font_w + x;
+}
+
+static void init_font(uint8_t* font, int font_w, int font_h) {
+    int c, x, y;
+    for (c = 0; c < 256; c++) {
+        for (y = 0; y < g_font_h; y++) {
+            for (x = 0; x < g_font_w; x++) {
+                font[font_offset(c, x, y)] = default_font_pixel(
+                        c,
+                        x * 8 / g_font_w,
+                        y * 8 / g_font_h);
+            }
+        }
+    }
 }
 
 static inline void cell_to_argb(Uint32* out_fore, Uint32* out_back, sodna_Cell cell) {
@@ -27,10 +44,23 @@ static inline void cell_to_argb(Uint32* out_fore, Uint32* out_back, sodna_Cell c
     *out_back = 0xff000000 | cell.back_r << 20 | cell.back_g << 12 | cell.back_b << 4;
 }
 
+static int window_w() {
+    return g_columns * g_font_w;
+}
+
+static int window_h() {
+    return g_rows * g_font_h;
+}
+
 int sodna_init(
         int font_width, int font_height,
         int num_columns, int num_rows,
         const char* window_title) {
+    g_font_w = font_width;
+    g_font_h = font_height;
+    g_columns = num_columns;
+    g_rows = num_rows;
+
     // Already initialized.
     if (g_win)
         return 1;
@@ -40,22 +70,24 @@ int sodna_init(
 
     g_win = SDL_CreateWindow(
             window_title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-            width, height, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+            window_w(), window_h(), SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
     if (!g_win)
         return 1;
 
     g_rend = SDL_CreateRenderer(g_win, -1,
             SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-    SDL_RenderSetLogicalSize(g_rend, width, height);
+    SDL_RenderSetLogicalSize(g_rend, window_w(), window_h());
 
     g_texture = SDL_CreateTexture(
             g_rend, SDL_PIXELFORMAT_ARGB8888,
             SDL_TEXTUREACCESS_STREAMING,
-            width, height);
+            window_w(), window_h());
 
-    g_pixels = (Uint32*)malloc(width * height * 4);
+    g_pixels = (Uint32*)malloc(window_w() * window_h() * 4);
     g_cells = (sodna_Cell*)malloc(sodna_width() * sodna_height() * sizeof(sodna_Cell));
     memset(g_cells, 0, sodna_width() * sodna_height() * sizeof(sodna_Cell));
+    g_font = (uint8_t*)malloc(g_font_w * g_font_h * 256);
+    init_font(g_font, g_font_w, g_font_h);
 
     return 0;
 }
@@ -66,7 +98,43 @@ void sodna_exit() {
     SDL_DestroyTexture(g_texture); g_texture = NULL;
     free(g_pixels); g_pixels = NULL;
     free(g_cells); g_cells = NULL;
+    free(g_font); g_font = NULL;
     SDL_Quit();
+}
+
+int sodna_font_width() { return g_font_w; }
+
+int sodna_font_height() { return g_font_h; }
+
+static void grab_char(uint8_t c, uint8_t* data, int pitch) {
+    int x, y;
+    for (y = 0; y < g_font_h; y++) {
+        for (x = 0; x < g_font_w; x++) {
+            g_font[font_offset(c, x, y)] = data[y * pitch + x];
+        }
+    }
+}
+
+void sodna_load_font_data(
+        uint8_t* pixels,
+        int pixels_width,
+        int pixels_height,
+        int first_char) {
+    int x, y, c = first_char;
+    int columns = pixels_width / g_font_w;
+    int rows = pixels_height / g_font_h;
+    if (columns <= 0 || rows <= 0)
+        return;
+    for (y = 0; y < rows; y++) {
+        for (x = 0; x < columns; x++) {
+            if (c >= 256)
+                return;
+            grab_char(c,
+                    &pixels[y * g_font_h * pixels_width + x * g_font_w],
+                    pixels_width);
+            ++c;
+        }
+    }
 }
 
 sodna_Cell* sodna_cells() {
@@ -75,10 +143,11 @@ sodna_Cell* sodna_cells() {
 
 void draw_cell(int x, int y, Uint32 fore_col, Uint32 back_col, uint8_t symbol) {
     int u, v;
-    for (v = 0; v < font_h; v++) {
-        size_t offset = x + (y + v) * width;
-        for (u = 0; u < font_w; u++) {
-            g_pixels[offset++] = font_pixel(symbol, u, v) ? fore_col : back_col;
+    for (v = 0; v < g_font_h; v++) {
+        size_t offset = x + (y + v) * window_w();
+        for (u = 0; u < g_font_w; u++) {
+            // TODO: Interpolate colors on font grayscale.
+            g_pixels[offset++] = g_font[font_offset(symbol, u, v)] ? fore_col : back_col;
         }
     }
 }
@@ -95,21 +164,17 @@ void sodna_flush() {
             Uint32 fore, back;
             sodna_Cell cell = cells[x + sodna_width() * y];
             cell_to_argb(&fore, &back, cell);
-            draw_cell(x * font_w, y * font_h, fore, back, cell.symbol);
+            draw_cell(x * g_font_w, y * g_font_h, fore, back, cell.symbol);
         }
     SDL_RenderClear(g_rend);
-    SDL_UpdateTexture(g_texture, NULL, g_pixels, width * sizeof(Uint32));
+    SDL_UpdateTexture(g_texture, NULL, g_pixels, window_w() * sizeof(Uint32));
     SDL_RenderCopy(g_rend, g_texture, NULL, NULL);
     SDL_RenderPresent(g_rend);
 }
 
-int sodna_width() {
-    return width / font_w;
-}
+int sodna_width() { return g_columns; }
 
-int sodna_height() {
-    return height / font_h;
-}
+int sodna_height() { return g_rows; }
 
 static int process_event(SDL_Event* event) {
     int key = 0;
