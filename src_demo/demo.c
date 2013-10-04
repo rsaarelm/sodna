@@ -5,7 +5,7 @@
 #include "stb_image.c"
 
 static sodna_Cell cell(char c, int fore, int back) {
-    return (sodna_Cell) { c, fore >> 8, fore >> 4, fore, back >> 8, back >> 4, back };
+    return (sodna_Cell) { c, fore, fore >> 4, fore >> 8, back, back >> 4, back >> 8 };
 }
 
 static uint8_t flame_buffer[27][82];
