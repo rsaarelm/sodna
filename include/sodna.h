@@ -56,10 +56,24 @@ int sodna_init(
  */
 void sodna_exit();
 
+/**
+ * \brief Get the width of a single character in pixels.
+ */
 int sodna_font_width();
 
+/**
+ * \brief Get the height of a single character in pixels.
+ */
 int sodna_font_height();
 
+/**
+ * \brief Load font pixel data from an 8-bit grayscale memory
+ * source.
+ *
+ * Rows of characters are treated as contiguous in the pixel data.
+ * You can specify the character code of the first character in the
+ * pixel data to only load in a part of the font.
+ */
 void sodna_load_font_data(
         uint8_t* pixels,
         int pixels_width,
@@ -94,6 +108,12 @@ typedef struct {
     unsigned int back_r: 4;
 } sodna_Cell;
 
+/**
+ * \brief Return the pointer to the screen memory of sodna_width() *
+ * sodna_height() terminal cells.
+ *
+ * Write values to this memory to display things.
+ */
 sodna_Cell* sodna_cells();
 
 /**
