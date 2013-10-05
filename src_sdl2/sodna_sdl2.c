@@ -18,7 +18,7 @@ const uint8_t font8[] = {
 };
 
 static inline uint8_t default_font_pixel(uint8_t symbol, int x, int y) {
-    return font8[symbol * 8 + y] & (1 << (7 - x));
+    return font8[symbol * 8 + y] & (1 << (7 - x)) ? 255 : 0;
 }
 
 static inline size_t font_offset(uint8_t symbol, int x, int y) {
