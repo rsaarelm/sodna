@@ -8,6 +8,19 @@ static sodna_Cell cell(char c, int fore, int back) {
     return (sodna_Cell) { c, fore, fore >> 4, fore >> 8, back, back >> 4, back >> 8 };
 }
 
+void test_screen() {
+    int x, y;
+    sodna_Cell* cells = sodna_cells();
+    for (y = 0; y < 16; y++) {
+        for (x = 0; x < 16; x++) {
+            int offset = y * sodna_width() + 60 + x;
+            cells[offset] = cell(x + 16*y, 0x280, 0x000);
+        }
+    }
+    sodna_flush();
+    sodna_wait_event();
+}
+
 static uint8_t flame_buffer[27][82];
 
 void update_flame() {
@@ -78,14 +91,6 @@ void draw_map(int player_x, int player_y) {
             }
         } while (terrain[y][++x]);
     }
-
-    for (y = 0; y < 16; y++) {
-        for (x = 0; x < 16; x++) {
-            int offset = y * sodna_width() + 60 + x;
-            cells[offset] = cell(x + 16*y, 0x280, 0x000);
-        }
-    }
-
 }
 
 int can_enter(int x, int y) {
@@ -131,8 +136,10 @@ void simpleRl() {
 
 int main(int argc, char* argv[]) {
     int w, h, n;
-    uint8_t* data = stbi_load("8x12.png", &w, &h, &n, 1);
-    sodna_init(8, 12, 80, 25, "Sodna demo");
+    uint8_t* data = stbi_load("8x16.png", &w, &h, &n, 1);
+    sodna_init(8, 16, 80, 25, "Sodna demo");
+    // Test screen with default font.
+    test_screen();
     if (data) {
         sodna_load_font_data(data, w, h, 0);
     } else {
@@ -140,6 +147,8 @@ int main(int argc, char* argv[]) {
                 stbi_failure_reason());
     }
     stbi_image_free(data);
+    // Test screen with user font.
+    test_screen();
     chaos();
     simpleRl();
     sodna_exit();
