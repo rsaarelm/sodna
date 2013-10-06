@@ -7,6 +7,8 @@
 extern "C" {
 #endif
 
+#define SODNA_VERSION "0.0.0"
+
 enum Key {
     SODNA_CLOSE_WINDOW = -1,
 
