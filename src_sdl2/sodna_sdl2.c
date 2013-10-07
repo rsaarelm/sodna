@@ -17,32 +17,30 @@ const uint8_t font8[] = {
 #include "font8.inc"
 };
 
-static inline uint8_t default_font_pixel(uint8_t symbol, int x, int y) {
-    return font8[symbol * 8 + y] & (1 << (7 - x)) ? 255 : 0;
-}
-
 static inline size_t font_offset(uint8_t symbol, int x, int y) {
     return symbol * g_font_w * g_font_h + y * g_font_w + x;
-}
-
-static void init_font(uint8_t* font, int font_w, int font_h) {
-    int c, x, y;
-    for (c = 0; c < 256; c++) {
-        for (y = 0; y < g_font_h; y++) {
-            for (x = 0; x < g_font_w; x++) {
-                font[font_offset(c, x, y)] = default_font_pixel(
-                        c,
-                        x * 8 / g_font_w,
-                        y * 8 / g_font_h);
-            }
-        }
-    }
 }
 
 static inline void cell_to_argb(Uint32* out_fore, Uint32* out_back, sodna_Cell cell) {
     *out_fore = 0xff000000 | cell.fore_r << 20 | cell.fore_g << 12 | cell.fore_b << 4;
     *out_back = 0xff000000 | cell.back_r << 20 | cell.back_g << 12 | cell.back_b << 4;
 }
+
+static void init_font(uint8_t* font, int font_w, int font_h) {
+    int c, x, y;
+    for (c = 0; c < 256; c++) {
+        for (y = 0; y < font_h; y++) {
+            for (x = 0; x < font_w; x++) {
+                int src_x = x * 8 / font_w;
+                int src_y = y * 8 / font_h;
+                font[font_offset(c, x, y)] = font8[
+                    ((c / 16) * 8 + src_y) * 8 * 16 +
+                    (c % 16) * 8 + src_x];
+            }
+        }
+    }
+}
+
 
 static int window_w() {
     return g_columns * g_font_w;
@@ -109,7 +107,7 @@ int sodna_font_width() { return g_font_w; }
 
 int sodna_font_height() { return g_font_h; }
 
-static void grab_char(uint8_t c, uint8_t* data, int pitch) {
+static void grab_char(uint8_t c, const uint8_t* data, int pitch) {
     int x, y;
     for (y = 0; y < g_font_h; y++) {
         for (x = 0; x < g_font_w; x++) {
@@ -119,7 +117,7 @@ static void grab_char(uint8_t c, uint8_t* data, int pitch) {
 }
 
 void sodna_load_font_data(
-        uint8_t* pixels,
+        const uint8_t* pixels,
         int pixels_width,
         int pixels_height,
         int first_char) {

@@ -77,7 +77,7 @@ int sodna_font_height();
  * pixel data to only load in a part of the font.
  */
 void sodna_load_font_data(
-        uint8_t* pixels,
+        const uint8_t* pixels,
         int pixels_width,
         int pixels_height,
         int first_char);
