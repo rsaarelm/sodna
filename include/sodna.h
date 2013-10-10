@@ -119,6 +119,12 @@ typedef struct {
 sodna_Cell* sodna_cells();
 
 /**
+ * \brief Set the color of the edges around the cells. Color format
+ * is 0xRGB.
+ */
+void sodna_set_background_color(int color);
+
+/**
  * \brief Display the terminal with the changes.
  */
 void sodna_flush();

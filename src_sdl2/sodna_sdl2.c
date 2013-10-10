@@ -143,6 +143,10 @@ sodna_Cell* sodna_cells() {
     return g_cells;
 }
 
+void sodna_set_background_color(int color) {
+    SDL_SetRenderDrawColor(g_rend, (color >> 8) << 4 , color & 0xf0, (color % 16) << 4, 255);
+}
+
 void draw_cell(int x, int y, Uint32 fore_col, Uint32 back_col, uint8_t symbol) {
     int u, v;
     for (v = 0; v < g_font_h; v++) {
