@@ -77,7 +77,8 @@ int sodna_init(
 
     g_rend = SDL_CreateRenderer(g_win, -1,
             SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-    SDL_RenderSetLogicalSize(g_rend, window_w(), window_h());
+    // Simple aspect-retaining scaling, but not pixel-perfect.
+    //SDL_RenderSetLogicalSize(g_rend, window_w(), window_h());
 
     g_texture = SDL_CreateTexture(
             g_rend, SDL_PIXELFORMAT_ARGB8888,
@@ -171,8 +172,34 @@ void draw_cell(int x, int y, Uint32 fore_col, Uint32 back_col, uint8_t symbol) {
     }
 }
 
+static void pixel_perfect_target_rect(
+        SDL_Rect* out_rect, int w, int h, SDL_Renderer* rend) {
+    SDL_Rect viewport;
+    float w_scale, h_scale, min_scale;
+    memset(out_rect, 0, sizeof(SDL_Rect));
+    SDL_RenderGetViewport(rend, &viewport);
+
+    w_scale = (float)viewport.w / w;
+    h_scale = (float)viewport.h / h;
+    min_scale = w_scale < h_scale ? w_scale : h_scale;
+
+    if (min_scale < 1.f) {
+        /* Less than 1 physical pixel for 1 logical pixel, can't
+         * achieve pixel perfection so just scale to what we get.
+         */
+        out_rect->w = w * min_scale;
+        out_rect->h = h * min_scale;
+    } else {
+        out_rect->w = w * floor(min_scale);
+        out_rect->h = h * floor(min_scale);
+    }
+    out_rect->x = (viewport.w - out_rect->w) / 2;
+    out_rect->y = (viewport.h - out_rect->h) / 2;
+}
+
 void sodna_flush() {
     int x, y;
+    SDL_Rect target;
     sodna_Cell* cells = sodna_cells();
     /* XXX: Always repaints all cells, even if there was no change from
      * previous frame. Could use a twin cell buffer and check for change
@@ -187,7 +214,9 @@ void sodna_flush() {
         }
     SDL_RenderClear(g_rend);
     SDL_UpdateTexture(g_texture, NULL, g_pixels, window_w() * sizeof(Uint32));
-    SDL_RenderCopy(g_rend, g_texture, NULL, NULL);
+
+    pixel_perfect_target_rect(&target, window_w(), window_h(), g_rend);
+    SDL_RenderCopy(g_rend, g_texture, NULL, &target);
     SDL_RenderPresent(g_rend);
 }
 
