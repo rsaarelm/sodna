@@ -143,7 +143,7 @@ sodna_Cell* sodna_cells() {
     return g_cells;
 }
 
-void sodna_set_background_color(int color) {
+void sodna_set_edge_color(int color) {
     SDL_SetRenderDrawColor(g_rend, (color >> 8) << 4 , color & 0xf0, (color % 16) << 4, 255);
 }
 
