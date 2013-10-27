@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Iinclude -Wall -Werror -O3
+CFLAGS = -Iinclude -Wall -Werror -O3 -lm
 LDFLAGS =
 AR = ar
 
