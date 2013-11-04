@@ -18,7 +18,7 @@ void test_screen() {
         }
     }
     sodna_flush();
-    sodna_wait_event();
+    while (sodna_wait_event() <= 0);
 }
 
 static uint8_t flame_buffer[27][82];
@@ -39,9 +39,11 @@ void update_flame() {
 }
 
 void chaos() {
+    int mx = -1, my = -1;
     // Test non-blocking animation.
     for (;;) {
         int x, y;
+        int e = 0;
         update_flame();
         for (y = 0; y < sodna_height(); y++) {
             for (x = 0; x < sodna_width(); x++) {
@@ -53,11 +55,31 @@ void chaos() {
                     (sodna_Cell){ ' ', 0, 0, 0, b, g, r };
             }
         }
+        if (mx >= 0 && my >= 0 && mx < sodna_width() && my < sodna_height())
+            sodna_cells()[mx + sodna_width() * my] =
+                (sodna_Cell){ 'X', 0, 0, 0, 0, 15, 0 };
+        do {
+            e = sodna_poll_event();
+            switch (SODNA_EVENT(e)) {
+                // Track mouse
+                case SODNA_MOUSE_MOVED:
+                case SODNA_MOUSE_DOWN_0:
+                case SODNA_MOUSE_DOWN_1:
+                case SODNA_MOUSE_DOWN_2:
+                case SODNA_MOUSE_DOWN_3:
+                    mx = SODNA_EVENT_X(e), my = SODNA_EVENT_Y(e);
+                    break;
+                // Halt animation if focus is lost.
+                case SODNA_FOCUS_LOST:
+                    while (SODNA_EVENT(sodna_wait_event()) != SODNA_FOCUS_GAINED);
+            }
+            if (e > 0)
+                goto exit;
+        } while (e);
         sodna_flush();
-        if (sodna_poll_event())
-            break;
     }
 
+exit:
     memset(sodna_cells(), 0, sodna_width() * sodna_height() * sizeof(sodna_Cell));
 }
 

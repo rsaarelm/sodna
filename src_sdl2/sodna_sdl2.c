@@ -228,13 +228,104 @@ int sodna_width() { return g_columns; }
 
 int sodna_height() { return g_rows; }
 
+/* Map screen coordinates to character cell coordinates. Return whether the
+ * resulting cell is within the screen cell array.
+ */
+static int mouse_pos_to_cells(int* x, int* y) {
+    SDL_Rect target;
+    pixel_perfect_target_rect(&target, window_w(), window_h(), g_rend);
+    *x -= target.x;
+    *y -= target.y;
+    *x /= target.w / g_columns;
+    *y /= target.h / g_rows;
+    return *x >= 0 && *y >= 0 && *x < window_w() && *y < window_h();
+}
+
+static int add_mouse_pos(int event, int x, int y) {
+    if (!mouse_pos_to_cells(&x, &y))
+        return 0;
+    int coords = (x & 0xfff) << 7 | (y & 0xfff) << 19;
+    return (event & 0x8000007f) | coords;
+}
+
+/* Non-character event structure:
+ * Negative numbers, first seven bits designate event IDs.
+ * The next 24 bits are mouse x and y positions for mouse events.
+ *
+ * low bits ------------------------> high bits
+ * --- 7 ---|--- 12 ---|--- 12 ---|---- 1 ----|
+ * event id | mouse x  | mouse y  | minus bit |
+ */
 static int process_event(SDL_Event* event) {
     int key = 0;
+
     if (event->type == SDL_WINDOWEVENT) {
         sodna_flush();
+        switch (event->window.event) {
+            case SDL_WINDOWEVENT_ENTER:
+                return SODNA_MOUSE_ENTERED;
+            case SDL_WINDOWEVENT_LEAVE:
+                return SODNA_MOUSE_EXITED;
+            case SDL_WINDOWEVENT_FOCUS_GAINED:
+                return SODNA_FOCUS_GAINED;
+            case SDL_WINDOWEVENT_FOCUS_LOST:
+                return SODNA_FOCUS_LOST;
+        }
+        return 0;
     }
+
     if (event->type == SDL_QUIT) {
         return SODNA_CLOSE_WINDOW;
+    }
+
+    if (event->type == SDL_MOUSEMOTION) {
+        int result = SODNA_MOUSE_MOVED;
+        result = add_mouse_pos(result, event->motion.x, event->motion.y);
+        return result;
+    }
+
+    if (event->type == SDL_MOUSEBUTTONDOWN) {
+        int result = SODNA_MOUSE_DOWN_0;
+        switch (event->button.button) {
+            case SDL_BUTTON_LEFT:
+                result = SODNA_MOUSE_DOWN_0;
+                break;
+            case SDL_BUTTON_MIDDLE:
+                result = SODNA_MOUSE_DOWN_1;
+                break;
+            case SDL_BUTTON_RIGHT:
+                result = SODNA_MOUSE_DOWN_2;
+                break;
+        }
+        result = add_mouse_pos(result, event->button.x, event->button.y);
+        return result;
+    }
+
+    if (event->type == SDL_MOUSEBUTTONUP) {
+        int result = SODNA_MOUSE_UP_0;
+        switch (event->button.button) {
+            case SDL_BUTTON_LEFT:
+                result = SODNA_MOUSE_UP_0;
+                break;
+            case SDL_BUTTON_MIDDLE:
+                result = SODNA_MOUSE_UP_1;
+                break;
+            case SDL_BUTTON_RIGHT:
+                result = SODNA_MOUSE_UP_2;
+                break;
+        }
+        result = add_mouse_pos(result, event->button.x, event->button.y);
+        return result;
+    }
+
+    if (event->type == SDL_MOUSEWHEEL) {
+        int result = SODNA_MOUSE_WHEEL_UP;
+        if (event->wheel.y == 0)
+            return 0;
+        else if (event->wheel.y > 0)
+            result = SODNA_MOUSE_WHEEL_DOWN;
+        result = add_mouse_pos(result, event->wheel.x, event->wheel.y);
+        return result;
     }
 
     /* Can't handle this event. */

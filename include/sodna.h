@@ -9,8 +9,34 @@ extern "C" {
 
 #define SODNA_VERSION "0.0.0"
 
+/**
+ * Return the non-keypress event code for an event return value.
+ *
+ * Event codes are negative numbers. The highest bit is used to mark the value
+ * as negative, and the low 7 bits are used to contain the event code. The
+ * remaining bits can contain parameter data for the event.
+ */
+#define SODNA_EVENT(code) ((code < 0) ? (code | 0x7fffff80) : 0)
+#define SODNA_EVENT_X(code) ((code >> 7) & 0xfff)
+#define SODNA_EVENT_Y(code) ((code >> 19) & 0xfff)
+
 enum Key {
     SODNA_CLOSE_WINDOW = -1,
+    SODNA_FOCUS_LOST = -2,
+    SODNA_FOCUS_GAINED = -3,
+    SODNA_MOUSE_MOVED = -4,
+    SODNA_MOUSE_ENTERED = -5,
+    SODNA_MOUSE_EXITED = -6,
+    SODNA_MOUSE_DOWN_0 = -9,
+    SODNA_MOUSE_DOWN_1 = -10,
+    SODNA_MOUSE_DOWN_2 = -11,
+    SODNA_MOUSE_DOWN_3 = -12,
+    SODNA_MOUSE_UP_0 = -13,
+    SODNA_MOUSE_UP_1 = -14,
+    SODNA_MOUSE_UP_2 = -15,
+    SODNA_MOUSE_UP_3 = -16,
+    SODNA_MOUSE_WHEEL_UP = -17,
+    SODNA_MOUSE_WHEEL_DOWN = -18,
 
     SODNA_UP = 1,
     SODNA_DOWN = 3,
