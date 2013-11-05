@@ -33,8 +33,8 @@ enum sodna_Key {
     SODNA_MOUSE_DOWN = -7,
     /* Bits 7 .. 9 contain the button id. */
     SODNA_MOUSE_UP = -8,
-    SODNA_MOUSE_WHEEL_UP = -9,
-    SODNA_MOUSE_WHEEL_DOWN = -10,
+    /* Bits 7 .. 8 contain delta, -1 (0x3), 0 (0x0), or 1 (0x1). */
+    SODNA_MOUSE_WHEEL = -9,
 
     SODNA_UP = 1,
     SODNA_DOWN = 3,

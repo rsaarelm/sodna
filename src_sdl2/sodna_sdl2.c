@@ -260,6 +260,10 @@ static int add_mouse_button(int event, const SDL_Event* sdl_event) {
     return event;
 }
 
+static int add_mouse_wheel(int event, int delta) {
+    return event | ((delta & 0x2) << 7);
+}
+
 /* Non-character event structure:
  * Negative numbers, first seven bits designate event IDs.
  * The next 24 bits are mouse x and y positions for mouse events.
@@ -308,13 +312,8 @@ static int process_event(const SDL_Event* event) {
     }
 
     if (event->type == SDL_MOUSEWHEEL) {
-        int result = SODNA_MOUSE_WHEEL_UP;
-        if (event->wheel.y == 0)
-            return 0;
-        else if (event->wheel.y > 0)
-            result = SODNA_MOUSE_WHEEL_DOWN;
-        result = add_mouse_pos(result, event->wheel.x, event->wheel.y);
-        return result;
+        int result = SODNA_MOUSE_WHEEL;
+        return add_mouse_wheel(result, event->wheel.y);
     }
 
     /* Can't handle this event. */
