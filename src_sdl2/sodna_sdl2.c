@@ -248,6 +248,18 @@ static int add_mouse_pos(int event, int x, int y) {
     return (event & 0x8000007f) | coords;
 }
 
+static int add_mouse_button(int event, const SDL_Event* sdl_event) {
+    switch (sdl_event->button.button) {
+        case SDL_BUTTON_LEFT:
+            return event | (SODNA_LEFT_BUTTON << 7);
+        case SDL_BUTTON_MIDDLE:
+            return event | (SODNA_MIDDLE_BUTTON << 7);
+        case SDL_BUTTON_RIGHT:
+            return event | (SODNA_RIGHT_BUTTON << 7);
+    }
+    return event;
+}
+
 /* Non-character event structure:
  * Negative numbers, first seven bits designate event IDs.
  * The next 24 bits are mouse x and y positions for mouse events.
@@ -256,7 +268,7 @@ static int add_mouse_pos(int event, int x, int y) {
  * --- 7 ---|--- 12 ---|--- 12 ---|---- 1 ----|
  * event id | mouse x  | mouse y  | minus bit |
  */
-static int process_event(SDL_Event* event) {
+static int process_event(const SDL_Event* event) {
     int key = 0;
 
     if (event->type == SDL_WINDOWEVENT) {
@@ -285,37 +297,14 @@ static int process_event(SDL_Event* event) {
     }
 
     if (event->type == SDL_MOUSEBUTTONDOWN) {
-        int result = SODNA_MOUSE_DOWN_0;
-        switch (event->button.button) {
-            case SDL_BUTTON_LEFT:
-                result = SODNA_MOUSE_DOWN_0;
-                break;
-            case SDL_BUTTON_MIDDLE:
-                result = SODNA_MOUSE_DOWN_1;
-                break;
-            case SDL_BUTTON_RIGHT:
-                result = SODNA_MOUSE_DOWN_2;
-                break;
-        }
-        result = add_mouse_pos(result, event->button.x, event->button.y);
+        int result = SODNA_MOUSE_DOWN;
+        return add_mouse_button(result, event);
         return result;
     }
 
     if (event->type == SDL_MOUSEBUTTONUP) {
-        int result = SODNA_MOUSE_UP_0;
-        switch (event->button.button) {
-            case SDL_BUTTON_LEFT:
-                result = SODNA_MOUSE_UP_0;
-                break;
-            case SDL_BUTTON_MIDDLE:
-                result = SODNA_MOUSE_UP_1;
-                break;
-            case SDL_BUTTON_RIGHT:
-                result = SODNA_MOUSE_UP_2;
-                break;
-        }
-        result = add_mouse_pos(result, event->button.x, event->button.y);
-        return result;
+        int result = SODNA_MOUSE_UP;
+        return add_mouse_button(result, event);
     }
 
     if (event->type == SDL_MOUSEWHEEL) {

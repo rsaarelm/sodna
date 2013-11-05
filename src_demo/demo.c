@@ -63,15 +63,14 @@ void chaos() {
             switch (SODNA_EVENT(e)) {
                 // Track mouse
                 case SODNA_MOUSE_MOVED:
-                case SODNA_MOUSE_DOWN_0:
-                case SODNA_MOUSE_DOWN_1:
-                case SODNA_MOUSE_DOWN_2:
-                case SODNA_MOUSE_DOWN_3:
                     mx = SODNA_EVENT_X(e), my = SODNA_EVENT_Y(e);
                     break;
                 // Halt animation if focus is lost.
                 case SODNA_FOCUS_LOST:
                     while (SODNA_EVENT(sodna_wait_event()) != SODNA_FOCUS_GAINED);
+                    break;
+                case SODNA_MOUSE_DOWN:
+                    goto exit;
             }
             if (e > 0)
                 goto exit;
@@ -123,9 +122,11 @@ void simpleRl() {
     int x = 2, y = 2;
     for (;;) {
         int dx = 0, dy = 0;
+        int e = 0;
         draw_map(x, y);
         sodna_flush();
-        switch (sodna_wait_event()) {
+        do { e = sodna_wait_event(); } while (e < SODNA_CLOSE_WINDOW);
+        switch (e) {
             case SODNA_CLOSE_WINDOW:
             case SODNA_ESC:
                 return;

@@ -19,24 +19,22 @@ extern "C" {
 #define SODNA_EVENT(code) ((code < 0) ? (code | 0x7fffff80) : 0)
 #define SODNA_EVENT_X(code) ((code >> 7) & 0xfff)
 #define SODNA_EVENT_Y(code) ((code >> 19) & 0xfff)
+#define SODNA_EVENT_MOUSE_BUTTON(code) ((code >> 7) & 0x4)
 
-enum Key {
+enum sodna_Key {
     SODNA_CLOSE_WINDOW = -1,
     SODNA_FOCUS_LOST = -2,
     SODNA_FOCUS_GAINED = -3,
+    /* Bits 7 .. 31 contain the mouse position. */
     SODNA_MOUSE_MOVED = -4,
     SODNA_MOUSE_ENTERED = -5,
     SODNA_MOUSE_EXITED = -6,
-    SODNA_MOUSE_DOWN_0 = -9,
-    SODNA_MOUSE_DOWN_1 = -10,
-    SODNA_MOUSE_DOWN_2 = -11,
-    SODNA_MOUSE_DOWN_3 = -12,
-    SODNA_MOUSE_UP_0 = -13,
-    SODNA_MOUSE_UP_1 = -14,
-    SODNA_MOUSE_UP_2 = -15,
-    SODNA_MOUSE_UP_3 = -16,
-    SODNA_MOUSE_WHEEL_UP = -17,
-    SODNA_MOUSE_WHEEL_DOWN = -18,
+    /* Bits 7 .. 9 contain the button id. */
+    SODNA_MOUSE_DOWN = -7,
+    /* Bits 7 .. 9 contain the button id. */
+    SODNA_MOUSE_UP = -8,
+    SODNA_MOUSE_WHEEL_UP = -9,
+    SODNA_MOUSE_WHEEL_DOWN = -10,
 
     SODNA_UP = 1,
     SODNA_DOWN = 3,
@@ -65,6 +63,12 @@ enum Key {
     SODNA_F11 = 25,
     SODNA_F12 = 26,
     SODNA_ESC = 27,
+};
+
+enum sodna_Button {
+    SODNA_LEFT_BUTTON = 0,
+    SODNA_MIDDLE_BUTTON = 1,
+    SODNA_RIGHT_BUTTON = 2,
 };
 
 /**
