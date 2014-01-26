@@ -8,11 +8,14 @@ all: libsodna_sdl2.so libsodna_sdl2.a demo
 sodna_sdl2.o: include/sodna.h src_sdl2/sodna_sdl2.c src_sdl2/font8.inc
 	$(CC) $(CFLAGS) -fPIC $$(sdl2-config --cflags) -c src_sdl2/sodna_sdl2.c -o $@
 
-src_sdl2/font8.inc: src_sdl2/font8.gray
-	cat $< | xxd -i > $@
-
-src_sdl2/font8.gray: src_sdl2/font8.png
-	convert $< $@
+# Prebuilt the font data include for simplicity. The steps below are how
+# you'd manually generate it if you have xxd and ImageMagic available.
+#
+#src_sdl2/font8.inc: src_sdl2/font8.gray
+#	cat $< | xxd -i > $@
+#
+#src_sdl2/font8.gray: src_sdl2/font8.png
+#	convert $< $@
 
 libsodna_sdl2.so: sodna_sdl2.o
 	$(CC) $(LDFLAGS) $< -shared -o $@ 
