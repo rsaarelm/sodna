@@ -279,11 +279,9 @@ static int process_event(const SDL_Event* event) {
         sodna_flush();
         switch (event->window.event) {
             case SDL_WINDOWEVENT_ENTER:
-                return SODNA_MOUSE_ENTERED;
-            case SDL_WINDOWEVENT_LEAVE:
-                return SODNA_MOUSE_EXITED;
             case SDL_WINDOWEVENT_FOCUS_GAINED:
                 return SODNA_FOCUS_GAINED;
+            case SDL_WINDOWEVENT_LEAVE:
             case SDL_WINDOWEVENT_FOCUS_LOST:
                 return SODNA_FOCUS_LOST;
         }
