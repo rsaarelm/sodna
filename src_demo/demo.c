@@ -67,7 +67,9 @@ void chaos() {
                     break;
                 // Halt animation if focus is lost.
                 case SODNA_FOCUS_LOST:
-                    while (SODNA_EVENT(sodna_wait_event()) != SODNA_FOCUS_GAINED);
+                    do {
+                        e = sodna_wait_event();
+                    } while (e != SODNA_FOCUS_GAINED && e != SODNA_CLOSE_WINDOW);
                     break;
                 case SODNA_MOUSE_DOWN:
                     goto exit;
