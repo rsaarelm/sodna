@@ -17,11 +17,11 @@ const uint8_t font8[] = {
 #include "font8.inc"
 };
 
-static inline size_t font_offset(uint8_t symbol, int x, int y) {
+static size_t font_offset(uint8_t symbol, int x, int y) {
     return symbol * g_font_w * g_font_h + y * g_font_w + x;
 }
 
-static inline void cell_to_argb(Uint32* out_fore, Uint32* out_back, sodna_Cell cell) {
+static void cell_to_argb(Uint32* out_fore, Uint32* out_back, sodna_Cell cell) {
     *out_fore = 0xff000000 | cell.fore_r << 20 | cell.fore_g << 12 | cell.fore_b << 4;
     *out_back = 0xff000000 | cell.back_r << 20 | cell.back_g << 12 | cell.back_b << 4;
 }
@@ -62,7 +62,7 @@ int sodna_init(
     g_columns = num_columns;
     g_rows = num_rows;
 
-    // Already initialized.
+    /* Already initialized. */
     if (g_win)
         return 1;
 
@@ -77,8 +77,8 @@ int sodna_init(
 
     g_rend = SDL_CreateRenderer(g_win, -1,
             SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-    // Simple aspect-retaining scaling, but not pixel-perfect.
-    //SDL_RenderSetLogicalSize(g_rend, window_w(), window_h());
+    /* Simple aspect-retaining scaling, but not pixel-perfect. */
+    /* SDL_RenderSetLogicalSize(g_rend, window_w(), window_h()); */
 
     g_texture = SDL_CreateTexture(
             g_rend, SDL_PIXELFORMAT_ARGB8888,
@@ -159,7 +159,7 @@ void draw_cell(int x, int y, Uint32 fore_col, Uint32 back_col, uint8_t symbol) {
                     g_pixels[offset++] = back_col;
                     break;
                 default:
-                    // Interpolate between background and foreground.
+                    /* Interpolate between background and foreground. */
                     g_pixels[offset] = 0;
                     for (i = 0; i < 32; i += 8) {
                         b = (back_col >> i) % 0xff;

@@ -49,7 +49,7 @@ void update_flame() {
 
 void chaos() {
     int mx = -1, my = -1;
-    // Test non-blocking animation.
+    /* Test non-blocking animation. */
     for (;;) {
         int x, y;
         int e = 0;
@@ -69,11 +69,11 @@ void chaos() {
         do {
             e = sodna_poll_event();
             switch (SODNA_EVENT(e)) {
-                // Track mouse
+                /* Track mouse */
                 case SODNA_MOUSE_MOVED:
                     mx = SODNA_EVENT_X(e), my = SODNA_EVENT_Y(e);
                     break;
-                // Halt animation if focus is lost.
+                /* Halt animation if focus is lost. */
                 case SODNA_FOCUS_LOST:
                     do {
                         e = sodna_wait_event();
@@ -171,7 +171,7 @@ int main(int argc, char* argv[]) {
     int w, h, n;
     uint8_t* data = stbi_load("8x16.png", &w, &h, &n, 1);
     sodna_init(8, 16, 80, 25, "Sodna demo");
-    // Test screen with default font.
+    /* Test screen with default font. */
     test_screen();
     if (data) {
         sodna_load_font_data(data, w, h, 0);
@@ -180,7 +180,7 @@ int main(int argc, char* argv[]) {
                 stbi_failure_reason());
     }
     stbi_image_free(data);
-    // Test screen with user font.
+    /* Test screen with user font. */
     test_screen();
     chaos();
     simpleRl();
