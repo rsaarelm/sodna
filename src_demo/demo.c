@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "stb_image.c"
+#include "stb_image.h"
 
 static sodna_Cell cell(char c, int fore, int back) {
     sodna_Cell ret;
