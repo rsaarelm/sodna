@@ -5,7 +5,16 @@
 #include "stb_image.c"
 
 static sodna_Cell cell(char c, int fore, int back) {
-    return (sodna_Cell) { c, fore, fore >> 4, fore >> 8, back, back >> 4, back >> 8 };
+    sodna_Cell ret;
+    ret.symbol = c;
+    ret.fore_b = fore;
+    ret.fore_g = fore >> 4;
+    ret.fore_r = fore >> 8;
+    ret.back_b = back;
+    ret.back_g = back >> 4;
+    ret.back_r = back >> 8;
+
+    return ret;
 }
 
 void test_screen() {
@@ -52,12 +61,11 @@ void chaos() {
                 int g = i > 15 ? i - 16 : 0;
                 int b = 0;
                 sodna_cells()[x + sodna_width() * y] =
-                    (sodna_Cell){ ' ', 0, 0, 0, b, g, r };
+                    cell(' ', 0x000, (r << 8) + (g << 4) + b);
             }
         }
         if (mx >= 0 && my >= 0 && mx < sodna_width() && my < sodna_height())
-            sodna_cells()[mx + sodna_width() * my] =
-                (sodna_Cell){ 'X', 0, 0, 0, 0, 15, 0 };
+            sodna_cells()[mx + sodna_width() * my] = cell('X', 0x000, 0x0f0);
         do {
             e = sodna_poll_event();
             switch (SODNA_EVENT(e)) {
