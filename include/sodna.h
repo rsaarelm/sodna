@@ -19,7 +19,7 @@ extern "C" {
 #define SODNA_EVENT(code) ((code < 0) ? (code | 0x7fffff80) : 0)
 #define SODNA_EVENT_X(code) ((code >> 7) & 0xfff)
 #define SODNA_EVENT_Y(code) ((code >> 19) & 0xfff)
-#define SODNA_EVENT_MOUSE_BUTTON(code) ((code >> 7) & 0x4)
+#define SODNA_EVENT_MOUSE_BUTTON(code) ((code >> 7) & 0x3)
 
 enum sodna_Key {
     SODNA_CLOSE_WINDOW = -1,
