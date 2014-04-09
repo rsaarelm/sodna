@@ -17,6 +17,13 @@ static sodna_Cell cell(char c, int fore, int back) {
     return ret;
 }
 
+int is_keydown(int e) {
+    if (e > 0) {
+        return SODNA_SCANCODE(e) > 0;
+    }
+    return 0;
+}
+
 void test_screen() {
     int x, y;
     sodna_Cell* cells = sodna_cells();
@@ -27,7 +34,7 @@ void test_screen() {
         }
     }
     sodna_flush();
-    while (sodna_wait_event() <= 0);
+    while (!is_keydown(sodna_wait_event(1000)));
 }
 
 static uint8_t flame_buffer[27][82];
@@ -76,13 +83,13 @@ void chaos() {
                 /* Halt animation if focus is lost. */
                 case SODNA_FOCUS_LOST:
                     do {
-                        e = sodna_wait_event();
+                        e = sodna_wait_event(1000);
                     } while (e != SODNA_FOCUS_GAINED && e != SODNA_CLOSE_WINDOW);
                     break;
                 case SODNA_MOUSE_DOWN:
                     goto exit;
             }
-            if (e > 0)
+            if (is_keydown(e))
                 goto exit;
         } while (e);
         sodna_flush();
@@ -135,25 +142,29 @@ void simpleRl() {
         int e = 0;
         draw_map(x, y);
         sodna_flush();
-        do { e = sodna_wait_event(); } while (e < SODNA_CLOSE_WINDOW);
-        switch (e) {
-            case SODNA_CLOSE_WINDOW:
-            case SODNA_ESC:
+        do { e = sodna_wait_event(1000); } while (e < SODNA_CLOSE_WINDOW);
+        if (e == SODNA_CLOSE_WINDOW)
+            return;
+        if (e <= 0)
+            continue;
+
+        switch (SODNA_SCANCODE(e)) {
+            case SODNA_SCANCODE_ESCAPE:
                 return;
-            case SODNA_UP:
-            case 'w':
+            case SODNA_SCANCODE_UP:
+            case SODNA_SCANCODE_W:
                 dy = -1;
                 break;
-            case SODNA_RIGHT:
-            case 'd':
+            case SODNA_SCANCODE_RIGHT:
+            case SODNA_SCANCODE_D:
                 dx = 1;
                 break;
-            case SODNA_DOWN:
-            case 's':
+            case SODNA_SCANCODE_DOWN:
+            case SODNA_SCANCODE_S:
                 dy = 1;
                 break;
-            case SODNA_LEFT:
-            case 'a':
+            case SODNA_SCANCODE_LEFT:
+            case SODNA_SCANCODE_A:
                 dx = -1;
                 break;
             default:
