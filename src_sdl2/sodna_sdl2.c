@@ -244,228 +244,349 @@ static int mouse_pos_to_cells(int* x, int* y) {
     return *x >= 0 && *y >= 0 && *x < window_w() && *y < window_h();
 }
 
-static int add_mouse_pos(int event, int x, int y) {
-    if (!mouse_pos_to_cells(&x, &y))
-        return 0;
-    int coords = (x & 0xfff) << 7 | (y & 0xfff) << 19;
-    return (event & 0x8000007f) | coords;
-}
-
-static int add_mouse_button(int event, const SDL_Event* sdl_event) {
+static sodna_Event add_mouse_button(sodna_Event event, const SDL_Event* sdl_event) {
     switch (sdl_event->button.button) {
         case SDL_BUTTON_LEFT:
-            return event | (SODNA_LEFT_BUTTON << 7);
+            event.button.id = SODNA_LEFT_BUTTON;
+            break;
         case SDL_BUTTON_MIDDLE:
-            return event | (SODNA_MIDDLE_BUTTON << 7);
+            event.button.id = SODNA_MIDDLE_BUTTON;
+            break;
         case SDL_BUTTON_RIGHT:
-            return event | (SODNA_RIGHT_BUTTON << 7);
+            event.button.id = SODNA_RIGHT_BUTTON;
+            break;
     }
     return event;
 }
 
-static int add_mouse_wheel(int event, int delta) {
-    return event | ((delta & 0x2) << 7);
-}
+#define SCANCODE_TABLE \
+    X(SDL_SCANCODE_A, SODNA_KEY_A) \
+    X(SDL_SCANCODE_B, SODNA_KEY_B) \
+    X(SDL_SCANCODE_C, SODNA_KEY_C) \
+    X(SDL_SCANCODE_D, SODNA_KEY_D) \
+    X(SDL_SCANCODE_E, SODNA_KEY_E) \
+    X(SDL_SCANCODE_F, SODNA_KEY_F) \
+    X(SDL_SCANCODE_G, SODNA_KEY_G) \
+    X(SDL_SCANCODE_H, SODNA_KEY_H) \
+    X(SDL_SCANCODE_I, SODNA_KEY_I) \
+    X(SDL_SCANCODE_J, SODNA_KEY_J) \
+    X(SDL_SCANCODE_K, SODNA_KEY_K) \
+    X(SDL_SCANCODE_L, SODNA_KEY_L) \
+    X(SDL_SCANCODE_M, SODNA_KEY_M) \
+    X(SDL_SCANCODE_N, SODNA_KEY_N) \
+    X(SDL_SCANCODE_O, SODNA_KEY_O) \
+    X(SDL_SCANCODE_P, SODNA_KEY_P) \
+    X(SDL_SCANCODE_Q, SODNA_KEY_Q) \
+    X(SDL_SCANCODE_R, SODNA_KEY_R) \
+    X(SDL_SCANCODE_S, SODNA_KEY_S) \
+    X(SDL_SCANCODE_T, SODNA_KEY_T) \
+    X(SDL_SCANCODE_U, SODNA_KEY_U) \
+    X(SDL_SCANCODE_V, SODNA_KEY_V) \
+    X(SDL_SCANCODE_W, SODNA_KEY_W) \
+    X(SDL_SCANCODE_X, SODNA_KEY_X) \
+    X(SDL_SCANCODE_Y, SODNA_KEY_Y) \
+    X(SDL_SCANCODE_Z, SODNA_KEY_Z) \
+    X(SDL_SCANCODE_1, SODNA_KEY_1) \
+    X(SDL_SCANCODE_2, SODNA_KEY_2) \
+    X(SDL_SCANCODE_3, SODNA_KEY_3) \
+    X(SDL_SCANCODE_4, SODNA_KEY_4) \
+    X(SDL_SCANCODE_5, SODNA_KEY_5) \
+    X(SDL_SCANCODE_6, SODNA_KEY_6) \
+    X(SDL_SCANCODE_7, SODNA_KEY_7) \
+    X(SDL_SCANCODE_8, SODNA_KEY_8) \
+    X(SDL_SCANCODE_9, SODNA_KEY_9) \
+    X(SDL_SCANCODE_0, SODNA_KEY_0) \
+    X(SDL_SCANCODE_RETURN, SODNA_KEY_ENTER) \
+    X(SDL_SCANCODE_ESCAPE, SODNA_KEY_ESCAPE) \
+    X(SDL_SCANCODE_BACKSPACE, SODNA_KEY_BACKSPACE) \
+    X(SDL_SCANCODE_TAB, SODNA_KEY_TAB) \
+    X(SDL_SCANCODE_SPACE, SODNA_KEY_SPACE) \
+    X(SDL_SCANCODE_MINUS, SODNA_KEY_MINUS) \
+    X(SDL_SCANCODE_EQUALS, SODNA_KEY_EQUALS) \
+    X(SDL_SCANCODE_LEFTBRACKET, SODNA_KEY_LEFTBRACKET) \
+    X(SDL_SCANCODE_RIGHTBRACKET, SODNA_KEY_RIGHTBRACKET) \
+    X(SDL_SCANCODE_BACKSLASH, SODNA_KEY_BACKSLASH) \
+    X(SDL_SCANCODE_SEMICOLON, SODNA_KEY_SEMICOLON) \
+    X(SDL_SCANCODE_APOSTROPHE, SODNA_KEY_APOSTROPHE) \
+    X(SDL_SCANCODE_GRAVE, SODNA_KEY_GRAVE) \
+    X(SDL_SCANCODE_COMMA, SODNA_KEY_COMMA) \
+    X(SDL_SCANCODE_PERIOD, SODNA_KEY_PERIOD) \
+    X(SDL_SCANCODE_SLASH, SODNA_KEY_SLASH) \
+    X(SDL_SCANCODE_CAPSLOCK, SODNA_KEY_CAPS_LOCK) \
+    X(SDL_SCANCODE_F1, SODNA_KEY_F1) \
+    X(SDL_SCANCODE_F2, SODNA_KEY_F2) \
+    X(SDL_SCANCODE_F3, SODNA_KEY_F3) \
+    X(SDL_SCANCODE_F4, SODNA_KEY_F4) \
+    X(SDL_SCANCODE_F5, SODNA_KEY_F5) \
+    X(SDL_SCANCODE_F6, SODNA_KEY_F6) \
+    X(SDL_SCANCODE_F7, SODNA_KEY_F7) \
+    X(SDL_SCANCODE_F8, SODNA_KEY_F8) \
+    X(SDL_SCANCODE_F9, SODNA_KEY_F9) \
+    X(SDL_SCANCODE_F10, SODNA_KEY_F10) \
+    X(SDL_SCANCODE_F11, SODNA_KEY_F11) \
+    X(SDL_SCANCODE_F12, SODNA_KEY_F12) \
+    X(SDL_SCANCODE_PRINTSCREEN, SODNA_KEY_PRINT_SCREEN) \
+    X(SDL_SCANCODE_SCROLLLOCK, SODNA_KEY_SCROLL_LOCK) \
+    X(SDL_SCANCODE_PAUSE, SODNA_KEY_PAUSE) \
+    X(SDL_SCANCODE_INSERT, SODNA_KEY_INSERT) \
+    X(SDL_SCANCODE_HOME, SODNA_KEY_HOME) \
+    X(SDL_SCANCODE_PAGEUP, SODNA_KEY_PAGE_UP) \
+    X(SDL_SCANCODE_DELETE, SODNA_KEY_DELETE) \
+    X(SDL_SCANCODE_END, SODNA_KEY_END) \
+    X(SDL_SCANCODE_PAGEDOWN, SODNA_KEY_PAGE_DOWN) \
+    X(SDL_SCANCODE_RIGHT, SODNA_KEY_RIGHT) \
+    X(SDL_SCANCODE_LEFT, SODNA_KEY_LEFT) \
+    X(SDL_SCANCODE_DOWN, SODNA_KEY_DOWN) \
+    X(SDL_SCANCODE_UP, SODNA_KEY_UP) \
+    X(SDL_SCANCODE_NUMLOCKCLEAR, SODNA_KEY_NUM_LOCK) \
+    X(SDL_SCANCODE_KP_MULTIPLY, SODNA_KEY_KP_MULTIPLY) \
+    X(SDL_SCANCODE_KP_MINUS, SODNA_KEY_KP_MINUS) \
+    X(SDL_SCANCODE_KP_PLUS, SODNA_KEY_KP_PLUS) \
+    X(SDL_SCANCODE_KP_ENTER, SODNA_KEY_KP_ENTER) \
+    X(SDL_SCANCODE_KP_1, SODNA_KEY_KP_1) \
+    X(SDL_SCANCODE_KP_2, SODNA_KEY_KP_2) \
+    X(SDL_SCANCODE_KP_3, SODNA_KEY_KP_3) \
+    X(SDL_SCANCODE_KP_4, SODNA_KEY_KP_4) \
+    X(SDL_SCANCODE_KP_5, SODNA_KEY_KP_5) \
+    X(SDL_SCANCODE_KP_6, SODNA_KEY_KP_6) \
+    X(SDL_SCANCODE_KP_7, SODNA_KEY_KP_7) \
+    X(SDL_SCANCODE_KP_8, SODNA_KEY_KP_8) \
+    X(SDL_SCANCODE_KP_9, SODNA_KEY_KP_9) \
+    X(SDL_SCANCODE_KP_0, SODNA_KEY_KP_0) \
+    X(SDL_SCANCODE_KP_PERIOD, SODNA_KEY_KP_DECIMAL) \
+    X(SDL_SCANCODE_KP_EQUALS, SODNA_KEY_KP_EQUALS) \
+    X(SDL_SCANCODE_LCTRL, SODNA_KEY_LEFT_CONTROL) \
+    X(SDL_SCANCODE_LSHIFT, SODNA_KEY_LEFT_SHIFT) \
+    X(SDL_SCANCODE_LALT, SODNA_KEY_LEFT_ALT) \
+    X(SDL_SCANCODE_LGUI, SODNA_KEY_LEFT_SUPER) \
+    X(SDL_SCANCODE_RCTRL, SODNA_KEY_RIGHT_CONTROL) \
+    X(SDL_SCANCODE_RSHIFT, SODNA_KEY_RIGHT_SHIFT) \
+    X(SDL_SCANCODE_RALT, SODNA_KEY_RIGHT_ALT) \
+    X(SDL_SCANCODE_RGUI, SODNA_KEY_RIGHT_SUPER)
 
-/* Non-character event structure:
- * Negative numbers, first seven bits designate event IDs.
- * The next 24 bits are mouse x and y positions for mouse events.
- *
- * low bits ------------------------> high bits
- * --- 7 ---|--- 12 ---|--- 12 ---|---- 1 ----|
- * event id | mouse x  | mouse y  | minus bit |
- */
-static int process_event(const SDL_Event* event) {
-    int scan = 0;
-    int sign = 1;
+#define KEYSYM_TABLE \
+    X(SDLK_a, SODNA_KEY_A) \
+    X(SDLK_b, SODNA_KEY_B) \
+    X(SDLK_c, SODNA_KEY_C) \
+    X(SDLK_d, SODNA_KEY_D) \
+    X(SDLK_e, SODNA_KEY_E) \
+    X(SDLK_f, SODNA_KEY_F) \
+    X(SDLK_g, SODNA_KEY_G) \
+    X(SDLK_h, SODNA_KEY_H) \
+    X(SDLK_i, SODNA_KEY_I) \
+    X(SDLK_j, SODNA_KEY_J) \
+    X(SDLK_k, SODNA_KEY_K) \
+    X(SDLK_l, SODNA_KEY_L) \
+    X(SDLK_m, SODNA_KEY_M) \
+    X(SDLK_n, SODNA_KEY_N) \
+    X(SDLK_o, SODNA_KEY_O) \
+    X(SDLK_p, SODNA_KEY_P) \
+    X(SDLK_q, SODNA_KEY_Q) \
+    X(SDLK_r, SODNA_KEY_R) \
+    X(SDLK_s, SODNA_KEY_S) \
+    X(SDLK_t, SODNA_KEY_T) \
+    X(SDLK_u, SODNA_KEY_U) \
+    X(SDLK_v, SODNA_KEY_V) \
+    X(SDLK_w, SODNA_KEY_W) \
+    X(SDLK_x, SODNA_KEY_X) \
+    X(SDLK_y, SODNA_KEY_Y) \
+    X(SDLK_z, SODNA_KEY_Z) \
+    X(SDLK_1, SODNA_KEY_1) \
+    X(SDLK_2, SODNA_KEY_2) \
+    X(SDLK_3, SODNA_KEY_3) \
+    X(SDLK_4, SODNA_KEY_4) \
+    X(SDLK_5, SODNA_KEY_5) \
+    X(SDLK_6, SODNA_KEY_6) \
+    X(SDLK_7, SODNA_KEY_7) \
+    X(SDLK_8, SODNA_KEY_8) \
+    X(SDLK_9, SODNA_KEY_9) \
+    X(SDLK_0, SODNA_KEY_0) \
+    X(SDLK_RETURN, SODNA_KEY_ENTER) \
+    X(SDLK_ESCAPE, SODNA_KEY_ESCAPE) \
+    X(SDLK_BACKSPACE, SODNA_KEY_BACKSPACE) \
+    X(SDLK_TAB, SODNA_KEY_TAB) \
+    X(SDLK_SPACE, SODNA_KEY_SPACE) \
+    X(SDLK_MINUS, SODNA_KEY_MINUS) \
+    X(SDLK_EQUALS, SODNA_KEY_EQUALS) \
+    X(SDLK_LEFTBRACKET, SODNA_KEY_LEFTBRACKET) \
+    X(SDLK_RIGHTBRACKET, SODNA_KEY_RIGHTBRACKET) \
+    X(SDLK_BACKSLASH, SODNA_KEY_BACKSLASH) \
+    X(SDLK_SEMICOLON, SODNA_KEY_SEMICOLON) \
+    X(SDLK_QUOTE, SODNA_KEY_APOSTROPHE) \
+    X(SDLK_BACKQUOTE, SODNA_KEY_GRAVE) \
+    X(SDLK_COMMA, SODNA_KEY_COMMA) \
+    X(SDLK_PERIOD, SODNA_KEY_PERIOD) \
+    X(SDLK_SLASH, SODNA_KEY_SLASH) \
+    X(SDLK_CAPSLOCK, SODNA_KEY_CAPS_LOCK) \
+    X(SDLK_F1, SODNA_KEY_F1) \
+    X(SDLK_F2, SODNA_KEY_F2) \
+    X(SDLK_F3, SODNA_KEY_F3) \
+    X(SDLK_F4, SODNA_KEY_F4) \
+    X(SDLK_F5, SODNA_KEY_F5) \
+    X(SDLK_F6, SODNA_KEY_F6) \
+    X(SDLK_F7, SODNA_KEY_F7) \
+    X(SDLK_F8, SODNA_KEY_F8) \
+    X(SDLK_F9, SODNA_KEY_F9) \
+    X(SDLK_F10, SODNA_KEY_F10) \
+    X(SDLK_F11, SODNA_KEY_F11) \
+    X(SDLK_F12, SODNA_KEY_F12) \
+    X(SDLK_PRINTSCREEN, SODNA_KEY_PRINT_SCREEN) \
+    X(SDLK_SCROLLLOCK, SODNA_KEY_SCROLL_LOCK) \
+    X(SDLK_PAUSE, SODNA_KEY_PAUSE) \
+    X(SDLK_INSERT, SODNA_KEY_INSERT) \
+    X(SDLK_HOME, SODNA_KEY_HOME) \
+    X(SDLK_PAGEUP, SODNA_KEY_PAGE_UP) \
+    X(SDLK_DELETE, SODNA_KEY_DELETE) \
+    X(SDLK_END, SODNA_KEY_END) \
+    X(SDLK_PAGEDOWN, SODNA_KEY_PAGE_DOWN) \
+    X(SDLK_RIGHT, SODNA_KEY_RIGHT) \
+    X(SDLK_LEFT, SODNA_KEY_LEFT) \
+    X(SDLK_DOWN, SODNA_KEY_DOWN) \
+    X(SDLK_UP, SODNA_KEY_UP) \
+    X(SDLK_NUMLOCKCLEAR, SODNA_KEY_NUM_LOCK) \
+    X(SDLK_KP_MULTIPLY, SODNA_KEY_KP_MULTIPLY) \
+    X(SDLK_KP_MINUS, SODNA_KEY_KP_MINUS) \
+    X(SDLK_KP_PLUS, SODNA_KEY_KP_PLUS) \
+    X(SDLK_KP_ENTER, SODNA_KEY_KP_ENTER) \
+    X(SDLK_KP_1, SODNA_KEY_KP_1) \
+    X(SDLK_KP_2, SODNA_KEY_KP_2) \
+    X(SDLK_KP_3, SODNA_KEY_KP_3) \
+    X(SDLK_KP_4, SODNA_KEY_KP_4) \
+    X(SDLK_KP_5, SODNA_KEY_KP_5) \
+    X(SDLK_KP_6, SODNA_KEY_KP_6) \
+    X(SDLK_KP_7, SODNA_KEY_KP_7) \
+    X(SDLK_KP_8, SODNA_KEY_KP_8) \
+    X(SDLK_KP_9, SODNA_KEY_KP_9) \
+    X(SDLK_KP_0, SODNA_KEY_KP_0) \
+    X(SDLK_KP_PERIOD, SODNA_KEY_KP_DECIMAL) \
+    X(SDLK_KP_EQUALS, SODNA_KEY_KP_EQUALS) \
+    X(SDLK_LCTRL, SODNA_KEY_LEFT_CONTROL) \
+    X(SDLK_LSHIFT, SODNA_KEY_LEFT_SHIFT) \
+    X(SDLK_LALT, SODNA_KEY_LEFT_ALT) \
+    X(SDLK_LGUI, SODNA_KEY_LEFT_SUPER) \
+    X(SDLK_RCTRL, SODNA_KEY_RIGHT_CONTROL) \
+    X(SDLK_RSHIFT, SODNA_KEY_RIGHT_SHIFT) \
+    X(SDLK_RALT, SODNA_KEY_RIGHT_ALT) \
+    X(SDLK_RGUI, SODNA_KEY_RIGHT_SUPER)
+
+static sodna_Event process_event(const SDL_Event* event) {
+    sodna_Event ret;
+    memset(&ret, 0, sizeof(ret));
 
     if (event->type == SDL_WINDOWEVENT) {
         sodna_flush();
         switch (event->window.event) {
             case SDL_WINDOWEVENT_ENTER:
             case SDL_WINDOWEVENT_FOCUS_GAINED:
-                return SODNA_FOCUS_GAINED;
+                ret.type = SODNA_EVENT_FOCUS_GAINED;
+                return ret;
             case SDL_WINDOWEVENT_LEAVE:
             case SDL_WINDOWEVENT_FOCUS_LOST:
-                return SODNA_FOCUS_LOST;
+                ret.type = SODNA_EVENT_FOCUS_LOST;
+                return ret;
         }
-        return 0;
+        return ret;
     }
 
     if (event->type == SDL_QUIT) {
-        return SODNA_CLOSE_WINDOW;
+        ret.type = SODNA_EVENT_CLOSE_WINDOW;
+        return ret;
     }
 
     if (event->type == SDL_MOUSEMOTION) {
-        int result = SODNA_MOUSE_MOVED;
-        result = add_mouse_pos(result, event->motion.x, event->motion.y);
-        return result;
+        int x = event->motion.x, y = event->motion.y;
+        if (!mouse_pos_to_cells(&x, &y))
+            return ret;
+        ret.type = SODNA_EVENT_MOUSE_MOVED;
+        ret.mouse.x = x;
+        ret.mouse.y = y;
+        return ret;
     }
 
     if (event->type == SDL_MOUSEBUTTONDOWN) {
-        int result = SODNA_MOUSE_DOWN;
-        return add_mouse_button(result, event);
-        return result;
+        ret.type = SODNA_EVENT_MOUSE_DOWN;
+        return add_mouse_button(ret, event);
     }
 
     if (event->type == SDL_MOUSEBUTTONUP) {
-        int result = SODNA_MOUSE_UP;
-        return add_mouse_button(result, event);
+        ret.type = SODNA_EVENT_MOUSE_UP;
+        return add_mouse_button(ret, event);
     }
 
     if (event->type == SDL_MOUSEWHEEL) {
-        int result = SODNA_MOUSE_WHEEL;
-        return add_mouse_wheel(result, event->wheel.y);
+        ret.type = SODNA_EVENT_MOUSE_WHEEL;
+        ret.wheel.delta = event->wheel.y;
+        return ret;
     }
 
     if (event->type == SDL_TEXTINPUT) {
-        // TODO: Handle unicode input.
-        return event->text.text[0];
+        ret.type = SODNA_EVENT_CHARACTER;
+        // TODO: This only handles ASCII-7. Assume text is UTF-8, read the
+        // first codepoint into ch.code.
+        ret.ch.code = event->text.text[0];
+        return ret;
     }
 
-    /* Can't handle this event. */
-    if (event->type != SDL_KEYDOWN && event->type != SDL_KEYUP)
-        return 0;
+    if (event->type == SDL_KEYDOWN)
+        ret.type = SODNA_EVENT_KEY_DOWN;
+    else if (event->type == SDL_KEYUP)
+        ret.type = SODNA_EVENT_KEY_UP;
+    else
+        /* Can't handle the rest of types, bail out. */
+        return ret;
 
-    if (event->type == SDL_KEYUP)
-        sign = -1;
-
-    scan = event->key.keysym.scancode;
-#define K(sdl, sodna) case sdl: return ((Uint8)(Sint8)(sodna * sign)) << 16
-    switch (scan) {
-        K(SDL_SCANCODE_A, SODNA_SCANCODE_A);
-        K(SDL_SCANCODE_B, SODNA_SCANCODE_B);
-        K(SDL_SCANCODE_C, SODNA_SCANCODE_C);
-        K(SDL_SCANCODE_D, SODNA_SCANCODE_D);
-        K(SDL_SCANCODE_E, SODNA_SCANCODE_E);
-        K(SDL_SCANCODE_F, SODNA_SCANCODE_F);
-        K(SDL_SCANCODE_G, SODNA_SCANCODE_G);
-        K(SDL_SCANCODE_H, SODNA_SCANCODE_H);
-        K(SDL_SCANCODE_I, SODNA_SCANCODE_I);
-        K(SDL_SCANCODE_J, SODNA_SCANCODE_J);
-        K(SDL_SCANCODE_K, SODNA_SCANCODE_K);
-        K(SDL_SCANCODE_L, SODNA_SCANCODE_L);
-        K(SDL_SCANCODE_M, SODNA_SCANCODE_M);
-        K(SDL_SCANCODE_N, SODNA_SCANCODE_N);
-        K(SDL_SCANCODE_O, SODNA_SCANCODE_O);
-        K(SDL_SCANCODE_P, SODNA_SCANCODE_P);
-        K(SDL_SCANCODE_Q, SODNA_SCANCODE_Q);
-        K(SDL_SCANCODE_R, SODNA_SCANCODE_R);
-        K(SDL_SCANCODE_S, SODNA_SCANCODE_S);
-        K(SDL_SCANCODE_T, SODNA_SCANCODE_T);
-        K(SDL_SCANCODE_U, SODNA_SCANCODE_U);
-        K(SDL_SCANCODE_V, SODNA_SCANCODE_V);
-        K(SDL_SCANCODE_W, SODNA_SCANCODE_W);
-        K(SDL_SCANCODE_X, SODNA_SCANCODE_X);
-        K(SDL_SCANCODE_Y, SODNA_SCANCODE_Y);
-        K(SDL_SCANCODE_Z, SODNA_SCANCODE_Z);
-        K(SDL_SCANCODE_1, SODNA_SCANCODE_1);
-        K(SDL_SCANCODE_2, SODNA_SCANCODE_2);
-        K(SDL_SCANCODE_3, SODNA_SCANCODE_3);
-        K(SDL_SCANCODE_4, SODNA_SCANCODE_4);
-        K(SDL_SCANCODE_5, SODNA_SCANCODE_5);
-        K(SDL_SCANCODE_6, SODNA_SCANCODE_6);
-        K(SDL_SCANCODE_7, SODNA_SCANCODE_7);
-        K(SDL_SCANCODE_8, SODNA_SCANCODE_8);
-        K(SDL_SCANCODE_9, SODNA_SCANCODE_9);
-        K(SDL_SCANCODE_0, SODNA_SCANCODE_0);
-        K(SDL_SCANCODE_RETURN, SODNA_SCANCODE_ENTER);
-        K(SDL_SCANCODE_ESCAPE, SODNA_SCANCODE_ESCAPE);
-        K(SDL_SCANCODE_BACKSPACE, SODNA_SCANCODE_BACKSPACE);
-        K(SDL_SCANCODE_TAB, SODNA_SCANCODE_TAB);
-        K(SDL_SCANCODE_SPACE, SODNA_SCANCODE_SPACE);
-        K(SDL_SCANCODE_MINUS, SODNA_SCANCODE_MINUS);
-        K(SDL_SCANCODE_EQUALS, SODNA_SCANCODE_EQUALS);
-        K(SDL_SCANCODE_LEFTBRACKET, SODNA_SCANCODE_LEFTBRACKET);
-        K(SDL_SCANCODE_RIGHTBRACKET, SODNA_SCANCODE_RIGHTBRACKET);
-        K(SDL_SCANCODE_BACKSLASH, SODNA_SCANCODE_BACKSLASH);
-        K(SDL_SCANCODE_SEMICOLON, SODNA_SCANCODE_SEMICOLON);
-        K(SDL_SCANCODE_APOSTROPHE, SODNA_SCANCODE_APOSTROPHE);
-        K(SDL_SCANCODE_GRAVE, SODNA_SCANCODE_GRAVE);
-        K(SDL_SCANCODE_COMMA, SODNA_SCANCODE_COMMA);
-        K(SDL_SCANCODE_PERIOD, SODNA_SCANCODE_PERIOD);
-        K(SDL_SCANCODE_SLASH, SODNA_SCANCODE_SLASH);
-        K(SDL_SCANCODE_CAPSLOCK, SODNA_SCANCODE_CAPS_LOCK);
-        K(SDL_SCANCODE_F1, SODNA_SCANCODE_F1);
-        K(SDL_SCANCODE_F2, SODNA_SCANCODE_F2);
-        K(SDL_SCANCODE_F3, SODNA_SCANCODE_F3);
-        K(SDL_SCANCODE_F4, SODNA_SCANCODE_F4);
-        K(SDL_SCANCODE_F5, SODNA_SCANCODE_F5);
-        K(SDL_SCANCODE_F6, SODNA_SCANCODE_F6);
-        K(SDL_SCANCODE_F7, SODNA_SCANCODE_F7);
-        K(SDL_SCANCODE_F8, SODNA_SCANCODE_F8);
-        K(SDL_SCANCODE_F9, SODNA_SCANCODE_F9);
-        K(SDL_SCANCODE_F10, SODNA_SCANCODE_F10);
-        K(SDL_SCANCODE_F11, SODNA_SCANCODE_F11);
-        K(SDL_SCANCODE_F12, SODNA_SCANCODE_F12);
-        K(SDL_SCANCODE_PRINTSCREEN, SODNA_SCANCODE_PRINT_SCREEN);
-        K(SDL_SCANCODE_SCROLLLOCK, SODNA_SCANCODE_SCROLL_LOCK);
-        K(SDL_SCANCODE_PAUSE, SODNA_SCANCODE_PAUSE);
-        K(SDL_SCANCODE_INSERT, SODNA_SCANCODE_INSERT);
-        K(SDL_SCANCODE_HOME, SODNA_SCANCODE_HOME);
-        K(SDL_SCANCODE_PAGEUP, SODNA_SCANCODE_PAGE_UP);
-        K(SDL_SCANCODE_DELETE, SODNA_SCANCODE_DELETE);
-        K(SDL_SCANCODE_END, SODNA_SCANCODE_END);
-        K(SDL_SCANCODE_PAGEDOWN, SODNA_SCANCODE_PAGE_DOWN);
-        K(SDL_SCANCODE_RIGHT, SODNA_SCANCODE_RIGHT);
-        K(SDL_SCANCODE_LEFT, SODNA_SCANCODE_LEFT);
-        K(SDL_SCANCODE_DOWN, SODNA_SCANCODE_DOWN);
-        K(SDL_SCANCODE_UP, SODNA_SCANCODE_UP);
-        K(SDL_SCANCODE_NUMLOCKCLEAR, SODNA_SCANCODE_NUM_LOCK);
-        K(SDL_SCANCODE_KP_MULTIPLY, SODNA_SCANCODE_KP_MULTIPLY);
-        K(SDL_SCANCODE_KP_MINUS, SODNA_SCANCODE_KP_MINUS);
-        K(SDL_SCANCODE_KP_PLUS, SODNA_SCANCODE_KP_PLUS);
-        K(SDL_SCANCODE_KP_ENTER, SODNA_SCANCODE_KP_ENTER);
-        K(SDL_SCANCODE_KP_1, SODNA_SCANCODE_KP_1);
-        K(SDL_SCANCODE_KP_2, SODNA_SCANCODE_KP_2);
-        K(SDL_SCANCODE_KP_3, SODNA_SCANCODE_KP_3);
-        K(SDL_SCANCODE_KP_4, SODNA_SCANCODE_KP_4);
-        K(SDL_SCANCODE_KP_5, SODNA_SCANCODE_KP_5);
-        K(SDL_SCANCODE_KP_6, SODNA_SCANCODE_KP_6);
-        K(SDL_SCANCODE_KP_7, SODNA_SCANCODE_KP_7);
-        K(SDL_SCANCODE_KP_8, SODNA_SCANCODE_KP_8);
-        K(SDL_SCANCODE_KP_9, SODNA_SCANCODE_KP_9);
-        K(SDL_SCANCODE_KP_0, SODNA_SCANCODE_KP_0);
-        K(SDL_SCANCODE_KP_PERIOD, SODNA_SCANCODE_KP_DECIMAL);
-        K(SDL_SCANCODE_KP_EQUALS, SODNA_SCANCODE_KP_EQUALS);
-        K(SDL_SCANCODE_LCTRL, SODNA_SCANCODE_LEFT_CONTROL);
-        K(SDL_SCANCODE_LSHIFT, SODNA_SCANCODE_LEFT_SHIFT);
-        K(SDL_SCANCODE_LALT, SODNA_SCANCODE_LEFT_ALT);
-        K(SDL_SCANCODE_LGUI, SODNA_SCANCODE_LEFT_SUPER);
-        K(SDL_SCANCODE_RCTRL, SODNA_SCANCODE_RIGHT_CONTROL);
-        K(SDL_SCANCODE_RSHIFT, SODNA_SCANCODE_RIGHT_SHIFT);
-        K(SDL_SCANCODE_RALT, SODNA_SCANCODE_RIGHT_ALT);
-        K(SDL_SCANCODE_RGUI, SODNA_SCANCODE_RIGHT_SUPER);
-        default: return ((Uint8)(SODNA_SCANCODE_UNKNOWN * sign)) << 16;
+    switch (event->key.keysym.sym) {
+#define X(sdl, sodna) case sdl: ret.key.layout = sodna; break;
+        KEYSYM_TABLE
+#undef X
+        default:
+            ret.key.layout = SODNA_KEY_UNKNOWN;
+            break;
     }
+
+    switch (event->key.keysym.scancode) {
+#define X(sdl, sodna) case sdl: ret.key.hardware = sodna; break;
+        SCANCODE_TABLE
+#undef X
+        default:
+            ret.key.hardware = SODNA_KEY_UNKNOWN;
+            break;
+    }
+
+    return ret;
 }
 
-int sodna_wait_event(int timeout_ms) {
+sodna_Event sodna_wait_event(int timeout_ms) {
     SDL_Event event;
     int start_time = SDL_GetTicks();
     for (;;) {
-        int ret;
+        int status;
+        sodna_Event ret;
+        memset(&ret, 0, sizeof(ret));
+
         if (timeout_ms <= 0)
-            ret = SDL_WaitEvent(&event);
+            status = SDL_WaitEvent(&event);
         else
-            ret = SDL_WaitEventTimeout(
+            status = SDL_WaitEventTimeout(
                     &event, timeout_ms - (SDL_GetTicks() - start_time));
-        if (ret == 0)
-            return 0;
+        if (status == 0)
+            return ret;
         ret = process_event(&event);
-        if (ret)
+        if (ret.type)
             return ret;
     }
-    /* Shouldn't get here. */
-    return 0;
 }
 
-int sodna_poll_event() {
+sodna_Event sodna_poll_event() {
+    static sodna_Event empty;
+
     SDL_Event event;
-    if (SDL_PollEvent(&event)) {
-        return process_event(&event);
+    while (SDL_PollEvent(&event)) {
+        sodna_Event ret = process_event(&event);
+        if (ret.type)
+            return ret;
     }
-    return 0;
+    return empty;
 }
 
 int sodna_ms_elapsed() {

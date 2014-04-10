@@ -17,13 +17,6 @@ static sodna_Cell cell(char c, int fore, int back) {
     return ret;
 }
 
-int is_keydown(int e) {
-    if (e > 0) {
-        return SODNA_SCANCODE(e) > 0;
-    }
-    return 0;
-}
-
 void test_screen() {
     int x, y;
     sodna_Cell* cells = sodna_cells();
@@ -34,7 +27,7 @@ void test_screen() {
         }
     }
     sodna_flush();
-    while (!is_keydown(sodna_wait_event(1000)));
+    while (sodna_wait_event(1000).type != SODNA_EVENT_KEY_DOWN);
 }
 
 static uint8_t flame_buffer[27][82];
@@ -59,7 +52,7 @@ void chaos() {
     /* Test non-blocking animation. */
     for (;;) {
         int x, y;
-        int e = 0;
+        sodna_Event e;
         update_flame();
         for (y = 0; y < sodna_height(); y++) {
             for (x = 0; x < sodna_width(); x++) {
@@ -75,23 +68,25 @@ void chaos() {
             sodna_cells()[mx + sodna_width() * my] = cell('X', 0x000, 0x0f0);
         do {
             e = sodna_poll_event();
-            switch (SODNA_EVENT(e)) {
+            switch (e.type) {
                 /* Track mouse */
-                case SODNA_MOUSE_MOVED:
-                    mx = SODNA_EVENT_X(e), my = SODNA_EVENT_Y(e);
+                case SODNA_EVENT_MOUSE_MOVED:
+                    mx = e.mouse.x;
+                    my = e.mouse.y;
                     break;
                 /* Halt animation if focus is lost. */
-                case SODNA_FOCUS_LOST:
+                case SODNA_EVENT_FOCUS_LOST:
                     do {
-                        e = sodna_wait_event(1000);
-                    } while (e != SODNA_FOCUS_GAINED && e != SODNA_CLOSE_WINDOW);
+                        e = sodna_wait_event(0);
+                    } while (e.type != SODNA_EVENT_FOCUS_GAINED &&
+                            e.type != SODNA_EVENT_CLOSE_WINDOW);
                     break;
-                case SODNA_MOUSE_DOWN:
+                case SODNA_EVENT_MOUSE_DOWN:
                     goto exit;
             }
-            if (is_keydown(e))
+            if (e.type == SODNA_EVENT_KEY_DOWN)
                 goto exit;
-        } while (e);
+        } while (e.type != SODNA_EVENT_NONE);
         sodna_flush();
     }
 
@@ -139,32 +134,32 @@ void simpleRl() {
     int x = 2, y = 2;
     for (;;) {
         int dx = 0, dy = 0;
-        int e = 0;
+        sodna_Event e;
         draw_map(x, y);
         sodna_flush();
-        do { e = sodna_wait_event(1000); } while (e < SODNA_CLOSE_WINDOW);
-        if (e == SODNA_CLOSE_WINDOW)
+        e = sodna_wait_event(0);
+        if (e.type == SODNA_EVENT_CLOSE_WINDOW)
             return;
-        if (e <= 0)
+        if (e.type != SODNA_EVENT_KEY_DOWN)
             continue;
 
-        switch (SODNA_SCANCODE(e)) {
-            case SODNA_SCANCODE_ESCAPE:
+        switch (e.key.hardware) {
+            case SODNA_KEY_ESCAPE:
                 return;
-            case SODNA_SCANCODE_UP:
-            case SODNA_SCANCODE_W:
+            case SODNA_KEY_UP:
+            case SODNA_KEY_W:
                 dy = -1;
                 break;
-            case SODNA_SCANCODE_RIGHT:
-            case SODNA_SCANCODE_D:
+            case SODNA_KEY_RIGHT:
+            case SODNA_KEY_D:
                 dx = 1;
                 break;
-            case SODNA_SCANCODE_DOWN:
-            case SODNA_SCANCODE_S:
+            case SODNA_KEY_DOWN:
+            case SODNA_KEY_S:
                 dy = 1;
                 break;
-            case SODNA_SCANCODE_LEFT:
-            case SODNA_SCANCODE_A:
+            case SODNA_KEY_LEFT:
+            case SODNA_KEY_A:
                 dx = -1;
                 break;
             default:
