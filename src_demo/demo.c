@@ -18,6 +18,16 @@ static sodna_Cell cell(char c, int fore, int back) {
     return ret;
 }
 
+void wait_enter() {
+    sodna_Event e;
+    for (;;) {
+        e = sodna_wait_event(1000);
+        if (e.type == SODNA_EVENT_KEY_DOWN && e.key.layout == SODNA_KEY_ENTER)
+            return;
+        sodna_flush();
+    }
+}
+
 void test_screen() {
     int x, y;
     sodna_Cell* cells = sodna_cells();
@@ -28,7 +38,7 @@ void test_screen() {
         }
     }
     sodna_flush();
-    while (sodna_wait_event(1000).type != SODNA_EVENT_KEY_DOWN);
+    wait_enter();
 }
 
 static uint8_t flame_buffer[27][82];
@@ -85,7 +95,7 @@ void chaos() {
                 case SODNA_EVENT_MOUSE_DOWN:
                     goto exit;
             }
-            if (e.type == SODNA_EVENT_KEY_DOWN)
+            if (e.type == SODNA_EVENT_KEY_DOWN && e.key.layout == SODNA_KEY_ENTER)
                 goto exit;
         } while (e.type != SODNA_EVENT_NONE);
         sodna_flush();
