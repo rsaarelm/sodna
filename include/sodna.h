@@ -115,6 +115,11 @@ int sodna_font_width();
 int sodna_font_height();
 
 /**
+ * \brief Resize the font and window during runtime.
+ */
+void sodna_resize(int font_width, int font_height, int num_columns, int num_rows);
+
+/**
  * \brief Load font pixel data from an 8-bit grayscale memory
  * source.
  *

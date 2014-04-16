@@ -3,6 +3,7 @@
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
+#include <assert.h>
 
 static SDL_Window* g_win = NULL;
 static SDL_Renderer* g_rend = NULL;
@@ -44,7 +45,6 @@ static void init_font(uint8_t* font, int font_w, int font_h) {
     }
 }
 
-
 static int window_w() {
     return g_columns * g_font_w;
 }
@@ -60,11 +60,6 @@ sodna_Error sodna_init(
     if (font_width < 1 || font_height < 1 || num_columns < 1 || num_rows < 1)
         return 1;
 
-    g_font_w = font_width;
-    g_font_h = font_height;
-    g_columns = num_columns;
-    g_rows = num_rows;
-
     /* Already initialized. */
     if (g_win)
         return SODNA_ERROR;
@@ -74,25 +69,15 @@ sodna_Error sodna_init(
 
     g_win = SDL_CreateWindow(
             window_title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-            window_w(), window_h(), SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+            font_width * num_columns, font_height * num_rows, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
     if (!g_win)
         return SODNA_ERROR;
 
     g_rend = SDL_CreateRenderer(g_win, -1,
             SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    sodna_resize(font_width, font_height, num_columns, num_rows);
     /* Simple aspect-retaining scaling, but not pixel-perfect. */
     /* SDL_RenderSetLogicalSize(g_rend, window_w(), window_h()); */
-
-    g_texture = SDL_CreateTexture(
-            g_rend, SDL_PIXELFORMAT_ARGB8888,
-            SDL_TEXTUREACCESS_STREAMING,
-            window_w(), window_h());
-
-    g_pixels = (Uint32*)malloc(window_w() * window_h() * 4);
-    g_cells = (sodna_Cell*)malloc(sodna_width() * sodna_height() * sizeof(sodna_Cell));
-    memset(g_cells, 0, sodna_width() * sodna_height() * sizeof(sodna_Cell));
-    g_font = (uint8_t*)malloc(g_font_w * g_font_h * 256);
-    init_font(g_font, g_font_w, g_font_h);
 
     return SODNA_OK;
 }
@@ -110,6 +95,32 @@ void sodna_exit() {
 int sodna_font_width() { return g_font_w; }
 
 int sodna_font_height() { return g_font_h; }
+
+void sodna_resize(int font_width, int font_height, int num_columns, int num_rows) {
+    assert(font_width > 0 && font_height > 0 && num_columns > 0 && num_rows > 0);
+    g_font_w = font_width;
+    g_font_h = font_height;
+    g_columns = num_columns;
+    g_rows = num_rows;
+
+    free(g_font); g_font = NULL;
+    g_font = (uint8_t*)malloc(g_font_w * g_font_h * 256);
+    init_font(g_font, g_font_w, g_font_h);
+
+    SDL_DestroyTexture(g_texture); g_texture = NULL;
+    g_texture = SDL_CreateTexture(
+            g_rend, SDL_PIXELFORMAT_ARGB8888,
+            SDL_TEXTUREACCESS_STREAMING,
+            window_w(), window_h());
+
+    free(g_pixels); g_pixels = NULL;
+    g_pixels = (Uint32*)malloc(window_w() * window_h() * 4);
+
+    free(g_cells); g_cells = NULL;
+    g_cells = (sodna_Cell*)malloc(sodna_width() * sodna_height() * sizeof(sodna_Cell));
+    memset(g_cells, 0, sodna_width() * sodna_height() * sizeof(sodna_Cell));
+    SDL_SetWindowSize(g_win, window_w(), window_h());
+}
 
 static void grab_char(uint8_t c, const uint8_t* data, int pitch) {
     int x, y;
