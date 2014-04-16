@@ -10,6 +10,7 @@
  */
 
 #include <stdint.h>
+#include <stdlib.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -213,9 +214,16 @@ int sodna_ms_elapsed();
 sodna_Error sodna_sleep_ms(int ms);
 
 /**
- * \brief Save a screenshot of the current screen to disk.
+ * \brief Write the RGB8 pixels of the current screenshot to user-provided
+ * memory.
+ *
+ * Returns the number of bytes written. If called with a NULL value will not
+ * write anything but will return the size of the screen dump anyway. The user
+ * can use this to find out how much space to allocate.
+ *
+ * May return 0 if the backend implementation does not support screenshots.
  */
-sodna_Error sodna_save_screenshot(const char* path);
+size_t sodna_dump_screenshot(void* dest);
 
 /* Mouse buttons */
 #define SODNA_LEFT_BUTTON 0

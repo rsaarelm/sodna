@@ -1,8 +1,5 @@
 #include "sodna.h"
 #include <SDL.h>
-
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image_write.h"
 #include <assert.h>
 
 static SDL_Window* g_win = NULL;
@@ -609,17 +606,20 @@ sodna_Error sodna_sleep_ms(int ms) {
     return SODNA_OK;
 }
 
-sodna_Error sodna_save_screenshot(const char* path) {
-    int i;
-    Uint32* buffer = (Uint32*)malloc(window_w() * window_h() * 4);
-    for (i = 0; i < window_w() * window_h(); i++) {
-        Uint8 r, g, b;
-        r = g_pixels[i] >> 16;
-        g = g_pixels[i] >> 8;
-        b = g_pixels[i];
-        buffer[i] = 0xff000000 | b << 16 | g << 8 | r;
+size_t sodna_dump_screenshot(void* dest) {
+    size_t pixels = window_w() * window_h();
+    if (dest) {
+        Uint8* bytes = (Uint8*)dest;
+        int i;
+        for (i = 0; i < pixels; i++) {
+            Uint8 r, g, b;
+            r = g_pixels[i] >> 16;
+            g = g_pixels[i] >> 8;
+            b = g_pixels[i];
+            bytes[i*3 + 0] = r;
+            bytes[i*3 + 1] = g;
+            bytes[i*3 + 2] = b;
+        }
     }
-    int ret = stbi_write_png(path, window_w(), window_h(), 4, buffer, 0);
-    free(buffer);
-    return ret ? SODNA_ERROR : SODNA_OK;
+    return pixels * 3;
 }
