@@ -50,6 +50,11 @@ typedef struct {
     uint8_t type;
     unsigned layout: 8;
     unsigned hardware: 8;
+    // Modifier keys
+    unsigned shift: 1;
+    unsigned ctrl: 1;
+    unsigned alt: 1;
+    unsigned super: 1;
 } sodna_KeyPressed;
 
 typedef struct {

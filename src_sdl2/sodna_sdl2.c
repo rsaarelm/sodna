@@ -535,8 +535,19 @@ static sodna_Event process_event(const SDL_Event* event) {
         return ret;
     }
 
-    if (event->type == SDL_KEYDOWN)
+    if (event->type == SDL_KEYDOWN) {
+        SDL_Keymod mods = SDL_GetModState();
+        if (mods & KMOD_CTRL)
+            ret.key.ctrl = 1;
+        if (mods & KMOD_SHIFT)
+            ret.key.shift = 1;
+        if (mods & KMOD_ALT)
+            ret.key.alt = 1;
+        if (mods & KMOD_GUI)
+            ret.key.super = 1;
+
         ret.type = SODNA_EVENT_KEY_DOWN;
+    }
     else if (event->type == SDL_KEYUP)
         ret.type = SODNA_EVENT_KEY_UP;
     else
