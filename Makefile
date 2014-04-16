@@ -23,8 +23,8 @@ libsodna_sdl2.so: sodna_sdl2.o
 libsodna_sdl2.a: sodna_sdl2.o
 	$(AR) $(LDFLAGS) rcs $@ $< 
 
-demo: libsodna_sdl2.so src_demo/demo.c
-	$(CC) $(CFLAGS) $(LDFLAGS) -L. -lsodna_sdl2 -Wl,-rpath=. -o $@ `sdl2-config --libs` src_demo/demo.c
+demo: libsodna_sdl2.so src_demo/demo.c sodna_util/sodna_util.c
+	$(CC) $(CFLAGS) $(LDFLAGS) -Isodna_util -L. -lsodna_sdl2 -Wl,-rpath=. -o $@ `sdl2-config --libs` src_demo/demo.c sodna_util/sodna_util.c
 
 clean:
 	rm -f *.o *.so *.a demo

@@ -1,8 +1,9 @@
 #include "sodna.h"
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 
-#include "stb_image.h"
+#include "sodna_util.h"
 
 static sodna_Cell cell(char c, int fore, int back) {
     sodna_Cell ret;
@@ -162,6 +163,8 @@ void simpleRl() {
             case SODNA_KEY_A:
                 dx = -1;
                 break;
+            case SODNA_KEY_F12:
+                sodna_save_screenshot_png("sodna_demo.png");
             default:
                 break;
         }
@@ -174,18 +177,12 @@ void simpleRl() {
 }
 
 int main(int argc, char* argv[]) {
-    int w, h, n;
-    uint8_t* data = stbi_load("8x16.png", &w, &h, &n, 1);
-    sodna_init(8, 16, 80, 25, "Sodna demo");
+    sodna_init(8, 8, 80, 25, "Sodna demo");
     /* Test screen with default font. */
     test_screen();
-    if (data) {
-        sodna_load_font_data(data, w, h, 0);
-    } else {
-        fprintf(stderr, "Couldn't load font bitmap: %s\n",
-                stbi_failure_reason());
+    if (sodna_load_font_sheet("8x16.png")) {
+        fprintf(stderr, "Couldn't load font bitmap\n");
     }
-    stbi_image_free(data);
     /* Test screen with user font. */
     test_screen();
     chaos();
