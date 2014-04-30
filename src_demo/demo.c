@@ -24,6 +24,8 @@ void wait_enter() {
         e = sodna_wait_event(1000);
         if (e.type == SODNA_EVENT_KEY_DOWN && e.key.layout == SODNA_KEY_ENTER)
             return;
+        if (e.type == SODNA_EVENT_CHARACTER)
+            printf("%c (\\u%04x)\n", e.ch.code, e.ch.code);
         sodna_flush();
     }
 }
