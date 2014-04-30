@@ -477,6 +477,48 @@ static sodna_Event add_mouse_button(sodna_Event event, const SDL_Event* sdl_even
     X(SDLK_RALT, SODNA_KEY_RIGHT_ALT) \
     X(SDLK_RGUI, SODNA_KEY_RIGHT_SUPER)
 
+/* UTF-8 decoding code from nsf's termbox library */
+static const unsigned char utf8_length[256] = {
+  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+  2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
+  3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,4,4,4,4,4,5,5,5,5,6,6,1,1
+};
+
+static const unsigned char utf8_mask[6] = {
+	0x7F,
+	0x1F,
+	0x0F,
+	0x07,
+	0x03,
+	0x01
+};
+
+static int utf8_char_length(char c)
+{
+    return utf8_length[(unsigned char)c];
+}
+
+static uint32_t utf8_char_to_unicode(const char *c)
+{
+    if (*c == 0)
+        return 0;
+
+    int i;
+    unsigned char len = utf8_char_length(*c);
+    unsigned char mask = utf8_mask[len-1];
+    uint32_t result = c[0] & mask;
+    for (i = 1; i < len; ++i) {
+        result <<= 6;
+        result |= c[i] & 0x3f;
+    }
+    return result;
+}
+
 static sodna_Event process_event(const SDL_Event* event) {
     sodna_Event ret;
     memset(&ret, 0, sizeof(ret));
@@ -529,9 +571,7 @@ static sodna_Event process_event(const SDL_Event* event) {
 
     if (event->type == SDL_TEXTINPUT) {
         ret.type = SODNA_EVENT_CHARACTER;
-        // TODO: This only handles ASCII-7. Assume text is UTF-8, read the
-        // first codepoint into ch.code.
-        ret.ch.code = event->text.text[0];
+        ret.ch.code = utf8_char_to_unicode(event->text.text);
         return ret;
     }
 
