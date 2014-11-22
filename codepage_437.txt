@@ -1,0 +1,23 @@
+██████████████████
+█ ☺☻♥♦♣♠•◘○◙♂♀♪♫☼█
+█►◄↕‼¶§▬↨↑↓→←∟↔▲▼█
+█ !"#$%&'()*+,-./█
+█0123456789:;<=>?█
+█@ABCDEFGHIJKLMNO█
+█PQRSTUVWXYZ[\]^_█
+█`abcdefghijklmno█
+█pqrstuvwxyz{|}~⌂█
+█ÇüéâäàåçêëèïîìÄÅ█
+█ÉæÆôöòûùÿÖÜ¢£¥₧ƒ█
+█áíóúñÑªº¿⌐¬½¼¡«»█
+█░▒▓│┤╡╢╖╕╣║╗╝╜╛┐█
+█└┴┬├─┼╞╟╚╔╩╦╠═╬╧█
+█╨╤╥╙╘╒╓╫╪┘┌█▄▌▐▀█
+█αßΓπΣσµτΦΘΩδ∞φε∩█
+█≡±≥≤⌠⌡÷≈°∙·√ⁿ²■ █
+██████████████████
+
+The characters of the default codepage in unicode. To make a Sodna
+font sheet using your favorite fixed-width font, just set the font
+in your editor, take a screeshot of this file, and crop the inside
+of the solid borders in an image editing program.
