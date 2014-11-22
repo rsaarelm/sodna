@@ -1,6 +1,9 @@
 #include "sodna.h"
 #include <SDL.h>
+#include <stdlib.h>
 #include <assert.h>
+#include <string.h>
+#include <math.h>
 
 static SDL_Window* g_win = NULL;
 static SDL_Renderer* g_rend = NULL;
