@@ -192,7 +192,7 @@ int main(int argc, char* argv[]) {
     sodna_init(8, 8, 80, 25, "Sodna demo");
     /* Test screen with default font. */
     test_screen();
-    if (sodna_load_font_sheet("8x16.png")) {
+    if (sodna_load_font_sheet("font/8x14.png")) {
         fprintf(stderr, "Couldn't load font bitmap\n");
     }
     /* Test screen with user font. */
