@@ -5,7 +5,10 @@ AR = ar
 
 all: libsodna_sdl2.so libsodna_sdl2.a demo
 
-sodna_sdl2.o: include/sodna.h src/sodna_sdl2.c src/font8.inc
+src/sodna_default_font.inc: font/8x8.png
+	./tools/bake_font.sh $< > $@
+
+sodna_sdl2.o: include/sodna.h src/sodna_sdl2.c src/sodna_default_font.inc
 	$(CC) $(CFLAGS) -fPIC $$(sdl2-config --cflags) -c src/sodna_sdl2.c -o $@
 
 libsodna_sdl2.so: sodna_sdl2.o
