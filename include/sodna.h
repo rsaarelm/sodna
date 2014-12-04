@@ -55,6 +55,7 @@ typedef struct {
     unsigned ctrl: 1;
     unsigned alt: 1;
     unsigned super: 1;
+    unsigned caps_lock: 1;
 } sodna_KeyPressed;
 
 typedef struct {

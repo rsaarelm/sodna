@@ -18,3 +18,7 @@ Bugs
   to limits in stb_image.
 * The centered, pixel-perfect canvas scaling does not work right on
   a tiling window manager like i3wm after calling sodna_resize.
+* Due to bug in SDL2, pressing caps lock when Sodna window is out of
+  focus can make the caps lock state reported by Sodna inconsistent
+  with the actual keyboard state.
+  (https://bugzilla.libsdl.org/show_bug.cgi?id=2736)

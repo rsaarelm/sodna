@@ -586,6 +586,8 @@ static sodna_Event process_event(const SDL_Event* event) {
             ret.key.alt = 1;
         if (mods & KMOD_GUI)
             ret.key.super = 1;
+        if (mods & KMOD_CAPS)
+            ret.key.caps_lock = 1;
 
         ret.type = SODNA_EVENT_KEY_DOWN;
     }
