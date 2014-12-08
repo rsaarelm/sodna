@@ -23,9 +23,8 @@ static size_t font_offset(uint8_t symbol, int x, int y) {
     return symbol * g_font_w * g_font_h + y * g_font_w + x;
 }
 
-static void cell_to_argb(Uint32* out_fore, Uint32* out_back, sodna_Cell cell) {
-    *out_fore = 0xff000000 | cell.fore.r << 16 | cell.fore.g << 8 | cell.fore.b;
-    *out_back = 0xff000000 | cell.back.r << 16 | cell.back.g << 8 | cell.back.b;
+static Uint32 convert_color(sodna_Color color) {
+    return 0xff000000 | color.r << 16 | color.g << 8 | color.b;
 }
 
 static void init_font(uint8_t* font, int font_w, int font_h) {
@@ -155,8 +154,8 @@ sodna_Cell* sodna_cells() {
     return g_cells;
 }
 
-void sodna_set_edge_color(int color) {
-    SDL_SetRenderDrawColor(g_rend, (color >> 8) << 4 , color & 0xf0, (color % 16) << 4, 255);
+void sodna_set_edge_color(sodna_Color color) {
+    SDL_SetRenderDrawColor(g_rend, color.r, color.g, color.b, 255);
 }
 
 void draw_cell(int x, int y, Uint32 fore_col, Uint32 back_col, uint8_t symbol) {
@@ -223,9 +222,9 @@ void sodna_flush() {
      */
     for (y = 0; y < sodna_height(); y++)
         for (x = 0; x < sodna_width(); x++) {
-            Uint32 fore, back;
             sodna_Cell cell = cells[x + sodna_width() * y];
-            cell_to_argb(&fore, &back, cell);
+            Uint32 fore = convert_color(cell.fore);
+            Uint32 back = convert_color(cell.back);
             draw_cell(x * g_font_w, y * g_font_h, fore, back, cell.symbol);
         }
     SDL_RenderClear(g_rend);
