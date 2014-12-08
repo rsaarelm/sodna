@@ -8,12 +8,12 @@
 static sodna_Cell cell(char c, int fore, int back) {
     sodna_Cell ret;
     ret.symbol = c;
-    ret.fore_b = fore;
-    ret.fore_g = fore >> 4;
-    ret.fore_r = fore >> 8;
-    ret.back_b = back;
-    ret.back_g = back >> 4;
-    ret.back_r = back >> 8;
+    ret.fore.b = (fore & 0x00f) << 4;
+    ret.fore.g = (fore & 0x0f0);
+    ret.fore.r = (fore & 0xf00) >> 4;
+    ret.back.b = (back & 0x00f) << 4;
+    ret.back.g = (back & 0x0f0);
+    ret.back.r = (back & 0xf00) >> 4;
 
     return ret;
 }

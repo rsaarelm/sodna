@@ -24,8 +24,8 @@ static size_t font_offset(uint8_t symbol, int x, int y) {
 }
 
 static void cell_to_argb(Uint32* out_fore, Uint32* out_back, sodna_Cell cell) {
-    *out_fore = 0xff000000 | cell.fore_r << 20 | cell.fore_g << 12 | cell.fore_b << 4;
-    *out_back = 0xff000000 | cell.back_r << 20 | cell.back_g << 12 | cell.back_b << 4;
+    *out_fore = 0xff000000 | cell.fore.r << 16 | cell.fore.g << 8 | cell.fore.b;
+    *out_back = 0xff000000 | cell.back.r << 16 | cell.back.g << 8 | cell.back.b;
 }
 
 static void init_font(uint8_t* font, int font_w, int font_h) {
