@@ -5,6 +5,8 @@
 
 #include "sodna_util.h"
 
+static int g_is_fullscreen = 0;
+
 static sodna_Cell cell(char c, int fore, int back) {
     sodna_Cell ret;
     ret.symbol = c;
@@ -179,6 +181,12 @@ void simpleRl() {
                 sodna_save_screenshot_png("sodna_demo.png");
             default:
                 break;
+        }
+
+        // Alt-enter to toggle fullscreen.
+        if (e.key.alt && e.key.layout == SODNA_KEY_ENTER) {
+            sodna_set_fullscreen(!g_is_fullscreen);
+            g_is_fullscreen = !g_is_fullscreen;
         }
 
         if (can_enter(x + dx, y + dy)) {

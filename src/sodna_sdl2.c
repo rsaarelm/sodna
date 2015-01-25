@@ -158,6 +158,12 @@ void sodna_set_edge_color(sodna_Color color) {
     SDL_SetRenderDrawColor(g_rend, color.r, color.g, color.b, 255);
 }
 
+sodna_Error sodna_set_fullscreen(int is_fullscreen_mode) {
+    int ret = SDL_SetWindowFullscreen(g_win,
+            (is_fullscreen_mode ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0));
+    return (ret == 0 ? SODNA_OK : SODNA_ERROR);
+}
+
 void draw_cell(int x, int y, Uint32 fore_col, Uint32 back_col, uint8_t symbol) {
     int u, v;
     for (v = 0; v < g_font_h; v++) {

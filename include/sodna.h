@@ -186,6 +186,13 @@ sodna_Cell* sodna_cells();
 void sodna_set_edge_color(sodna_Color color);
 
 /**
+ * \brief Toggle fullscreen mode, 1 for fullscreen, 0 for windowed
+ *
+ * \return error code if not supported by backend
+ */
+sodna_Error sodna_set_fullscreen(int is_fullscreen_mode);
+
+/**
  * \brief Display the terminal with the changes.
  */
 void sodna_flush();
