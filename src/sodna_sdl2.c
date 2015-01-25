@@ -170,18 +170,22 @@ void draw_cell(int x, int y, Uint32 fore_col, Uint32 back_col, uint8_t symbol) {
         size_t offset = x + (y + v) * window_w();
         for (u = 0; u < g_font_w; u++) {
             uint8_t col = g_font[font_offset(symbol, u, v)];
-            int i, b, f;
+            int i;
+            uint8_t* back_comp;
+            uint8_t* fore_comp;
+            uint8_t* target_comp;
             switch (col) {
                 case 0:
                     g_pixels[offset++] = back_col;
                     break;
                 default:
                     /* Interpolate between background and foreground. */
-                    g_pixels[offset] = 0;
-                    for (i = 0; i < 32; i += 8) {
-                        b = (back_col >> i) % 0xff;
-                        f = (fore_col >> i) % 0xff;
-                        g_pixels[offset] |= (b + (f - b) * col / 255) << i;
+                    back_comp = (uint8_t*)(&back_col);
+                    fore_comp = (uint8_t*)(&fore_col);
+                    target_comp = (uint8_t*)(&g_pixels[offset]);
+
+                    for (i = 0; i < 4; i++) {
+                        target_comp[i] = back_comp[i] + (fore_comp[i] - back_comp[i]) * col / 0xff;
                     }
                     ++offset;
                     break;
