@@ -38,22 +38,25 @@ Files
 Notes
 -----
 
-* Use tools/bake_font.sh to create your own baked-in font include
+* Use `tools/bake_font.sh` to create your own baked-in font include
   file from a 16 columns by 16 rows left-to-right bitmap font sheet.
   Eg.
 
       $ ./tools/bake_font.sh my_font.png > my_font.inc
 
-* See codepage_437.txt for making your own font sheet image.
+  The tool requires that you have ImageMagick installed and in your
+  command line path.
+
+* See `codepage_437.txt` for making your own font sheet image.
 
 Bugs
 ----
 
-* sodna_util can't read font sheet pngs processed with optipng due
-  to limits in stb_image.
+* `sodna_util.c` can't read font sheet pngs processed with optipng due
+  to limits in `stb_image`.
 * The centered, pixel-perfect canvas scaling does not work right on
-  a tiling window manager like i3wm after calling sodna_resize.
-* Due to bug in SDL2, pressing caps lock when Sodna window is out of
-  focus can make the caps lock state reported by Sodna inconsistent
-  with the actual keyboard state.
-  (https://bugzilla.libsdl.org/show_bug.cgi?id=2736)
+  a tiling window manager like i3wm after calling `sodna_resize`.
+* Due to [bug](https://bugzilla.libsdl.org/show_bug.cgi?id=2736) in
+  SDL2, pressing caps lock when Sodna window is out of focus can
+  make the caps lock state reported by Sodna inconsistent with the
+  actual keyboard state.
