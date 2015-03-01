@@ -2,4 +2,7 @@
 *.a
 *.so
 *.gray
-demo
+sodna-demo
+Makefile
+obj/
+*.make
