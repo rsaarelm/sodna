@@ -3,6 +3,15 @@ Sodna is a lightweight virtual console library for text mode games.
 Current implementation uses SDL 2.0 from http://libsdl.org/ as a
 backend.
 
+To build the demo application, use premake:
+
+$ premake4 gmake
+$ make
+
+Linux users will want to have premake4 and SDL2 installed using
+their system package manager. Windows versions are included with
+Sodna.
+
 Notes
 -----
 
