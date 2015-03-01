@@ -5,8 +5,8 @@ backend.
 
 To build the demo application, use premake:
 
-$ premake4 gmake
-$ make
+    $ premake4 gmake
+    $ make
 
 Linux users will want to have premake4 and SDL2 installed using
 their system package manager. Windows versions are included with
@@ -42,7 +42,7 @@ Notes
   file from a 16 columns by 16 rows left-to-right bitmap font sheet.
   Eg.
 
-    $ ./tools/bake_font.sh my_font.png > my_font.inc
+      $ ./tools/bake_font.sh my_font.png > my_font.inc
 
 * See codepage_437.txt for making your own font sheet image.
 
