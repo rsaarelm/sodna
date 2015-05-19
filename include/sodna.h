@@ -1,9 +1,11 @@
 #ifndef _SODNA_H
 #define _SODNA_H
 
+/** \file sodna.h */
+
 /*
  * ##### ##### ###   ###   #####  A lightweight text game library
- * #     #   # #  #  #  #  #   #  Copyright (C) Risto Saarelma 2013-2014
+ * #     #   # #  #  #  #  #   #  Copyright (C) Risto Saarelma 2013-2015
  * ##### #   # #   # #   # #####
  *     # #   # #   # #   # #   #  MIT License
  * ##### ##### ##### #   # #   #
@@ -17,6 +19,170 @@ extern "C" {
 #endif
 
 #define SODNA_VERSION "0.3.0-pre"
+
+/**
+ * Status codes for operations that may fail
+ */
+typedef enum {
+    SODNA_OK = 0,
+    SODNA_ERROR = 1,
+    SODNA_UNSUPPORTED = 2,
+} sodna_Error;
+
+/**
+ * Start the Sodna terminal.
+ *
+ * Start using Sodna by calling \a sodna_init. Specify the pixel font
+ * dimensions to determine the shape of the characters and the size of
+ * the font pixel sheet. Specify column and row count to determine how
+ * much text will fit on the window.
+ *
+ * \return SODNA_OK or SODNA_ERROR if opening the terminal failed.
+ */
+sodna_Error sodna_init(
+        int font_width,
+        int font_height,
+        int num_columns,
+        int num_rows,
+        const char* window_title);
+
+/**
+ * Color data structure
+ */
+typedef struct {
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+} sodna_Color;
+
+/**
+ * Terminal cell data structure
+ *
+ * Each cell has a foreground and background color value and an ASCII
+ * symbol value. The whole cell is padded to 64 bits.
+ */
+typedef struct {
+    sodna_Color fore;
+    sodna_Color back;
+    unsigned int symbol: 8;
+    unsigned int reserved: 8;
+} sodna_Cell;
+
+/**
+ * Return the pointer to the screen memory of sodna_width() *
+ * sodna_height() terminal cells.
+ *
+ * Write values to this memory to display things.
+ */
+sodna_Cell* sodna_cells();
+
+/**
+ * Display the terminal with the changes.
+ */
+void sodna_flush();
+
+/**
+ * Shut down the running terminal.
+ */
+void sodna_exit();
+
+/**
+ * Get the width of a single character in pixels.
+ */
+int sodna_font_width();
+
+/**
+ * Get the height of a single character in pixels.
+ */
+int sodna_font_height();
+
+/**
+ * Get the width in columns of the terminal window.
+ */
+int sodna_width();
+
+/**
+ * Get the height in rows of the terminal window.
+ */
+int sodna_height();
+
+/**
+ * Set the color of the edges around the cells.
+ */
+void sodna_set_edge_color(sodna_Color color);
+
+/**
+ * Toggle fullscreen mode, 1 for fullscreen, 0 for windowed
+ *
+ * \return error code if not supported by backend
+ */
+sodna_Error sodna_set_fullscreen(int is_fullscreen_mode);
+
+/*
+ * The events are returned as sodna_Event unions. The type field has one
+ * of the SODNA_EVENT* values and tells which type of actual event
+ * struct the sodna_Event should be interpreted as.
+ */
+
+/** Event for a key press or key release */
+typedef struct {
+    uint8_t type;
+    /** Pressed key according to the user's keyboard layout */
+    unsigned layout: 8;
+    /** Layout independent hardware key, interpreted as if keyboard was US QWERTY */
+    unsigned hardware: 8;
+    // Modifier keys
+    unsigned shift: 1;
+    unsigned ctrl: 1;
+    unsigned alt: 1;
+    unsigned super: 1;
+    unsigned caps_lock: 1;
+} sodna_KeyPressed;
+
+/** Event for a printable character typed */
+typedef struct {
+    uint8_t type;
+    /** Unicode codepoint for the character */
+    unsigned code: 24;
+} sodna_CharTyped;
+
+/** Event for a mouse move */
+typedef struct {
+    uint8_t type;
+    unsigned x: 12;
+    unsigned y: 12;
+} sodna_MouseMove;
+
+/** Event for a mouse button press or release */
+typedef struct {
+    uint8_t type;
+    /** Bit field of SODNA_*_BUTTON values */
+    unsigned id: 8;
+} sodna_MouseButton;
+
+#define SODNA_LEFT_BUTTON 0
+#define SODNA_MIDDLE_BUTTON 1
+#define SODNA_RIGHT_BUTTON 2
+
+/** Mouse wheel event */
+typedef struct {
+    uint8_t type;
+    signed delta: 8;
+} sodna_MouseWheel;
+
+/** Event union */
+typedef union {
+    uint8_t type;
+    sodna_KeyPressed key;
+    sodna_CharTyped ch;
+    sodna_MouseMove mouse;
+    sodna_MouseButton button;
+    sodna_MouseWheel wheel;
+} sodna_Event;
+
+/*
+ * Identifier codes for Sodna events.
+ */
 
 #define SODNA_EVENT_NONE            0x00
 
@@ -46,89 +212,13 @@ extern "C" {
 #define SODNA_EVENT_MOUSE_ENTER     0x08
 #define SODNA_EVENT_MOUSE_EXIT      0x88
 
-typedef struct {
-    uint8_t type;
-    unsigned layout: 8;
-    unsigned hardware: 8;
-    // Modifier keys
-    unsigned shift: 1;
-    unsigned ctrl: 1;
-    unsigned alt: 1;
-    unsigned super: 1;
-    unsigned caps_lock: 1;
-} sodna_KeyPressed;
-
-typedef struct {
-    uint8_t type;
-    unsigned code: 24;
-} sodna_CharTyped;
-
-typedef struct {
-    uint8_t type;
-    unsigned x: 12;
-    unsigned y: 12;
-} sodna_MouseMove;
-
-typedef struct {
-    uint8_t type;
-    unsigned id: 8;
-} sodna_MouseButton;
-
-typedef struct {
-    uint8_t type;
-    signed delta: 8;
-} sodna_MouseWheel;
-
-typedef union {
-    uint8_t type;
-    sodna_KeyPressed key;
-    sodna_CharTyped ch;
-    sodna_MouseMove mouse;
-    sodna_MouseButton button;
-    sodna_MouseWheel wheel;
-} sodna_Event;
-
-typedef enum {
-    SODNA_OK = 0,
-    SODNA_ERROR = 1,
-    SODNA_UNSUPPORTED = 2,
-} sodna_Error;
-
 /**
- * \brief Start the terminal.
- *
- * \return Zero on success, nonzero on error
- */
-sodna_Error sodna_init(
-        int font_width,
-        int font_height,
-        int num_columns,
-        int num_rows,
-        const char* window_title);
-
-/**
- * \brief Shut down the running terminal.
- */
-void sodna_exit();
-
-/**
- * \brief Get the width of a single character in pixels.
- */
-int sodna_font_width();
-
-/**
- * \brief Get the height of a single character in pixels.
- */
-int sodna_font_height();
-
-/**
- * \brief Resize the font and window during runtime.
+ * Resize the font and window during runtime.
  */
 void sodna_resize(int font_width, int font_height, int num_columns, int num_rows);
 
 /**
- * \brief Load font pixel data from an 8-bit grayscale memory
- * source.
+ * Load font pixel data from an 8-bit grayscale memory source.
  *
  * Rows of characters are treated as contiguous in the pixel data.
  * You can specify the character code of the first character in the
@@ -141,64 +231,7 @@ void sodna_load_font_data(
         int first_char);
 
 /**
- * \brief Get the width in columns of the terminal window.
- */
-int sodna_width();
-
-/**
- * \brief Get the height in rows of the terminal window.
- */
-int sodna_height();
-
-/**
- * \brief color data structure
- */
-typedef struct {
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
-} sodna_Color;
-
-/**
- * \brief Terminal cell data structure.
- *
- * Each cell has a truecolor foreground and background value and an ASCII
- * symbol value. The whole cell is padded to 64 bits.
- */
-typedef struct {
-    sodna_Color fore;
-    sodna_Color back;
-    unsigned int symbol: 8;
-    unsigned int reserved: 8;
-} sodna_Cell;
-
-/**
- * \brief Return the pointer to the screen memory of sodna_width() *
- * sodna_height() terminal cells.
- *
- * Write values to this memory to display things.
- */
-sodna_Cell* sodna_cells();
-
-/**
- * \brief Set the color of the edges around the cells.
- */
-void sodna_set_edge_color(sodna_Color color);
-
-/**
- * \brief Toggle fullscreen mode, 1 for fullscreen, 0 for windowed
- *
- * \return error code if not supported by backend
- */
-sodna_Error sodna_set_fullscreen(int is_fullscreen_mode);
-
-/**
- * \brief Display the terminal with the changes.
- */
-void sodna_flush();
-
-/**
- * \brief Wait for an input event.
+ * Wait for an input event.
  *
  * \param timeout_ms If positive, indicate that the function should not wait
  * beyond that number of milliseconds. If 0, indicate that the function should
@@ -209,7 +242,7 @@ void sodna_flush();
 sodna_Event sodna_wait_event(int timeout_ms);
 
 /**
- * \brief Poll for input events.
+ * Poll for input events.
  *
  * \return Event code of the first queued input or 0 if there are no pending
  * inputs.
@@ -217,7 +250,7 @@ sodna_Event sodna_wait_event(int timeout_ms);
 sodna_Event sodna_poll_event();
 
 /**
- * \brief Return time in milliseconds since Sodna init.
+ * Return time in milliseconds since Sodna init.
  *
  * \return -1 if timing is not supported, otherwise the number of milliseconds
  * elapsed.
@@ -225,12 +258,12 @@ sodna_Event sodna_poll_event();
 int sodna_ms_elapsed();
 
 /**
- * \brief Suspend program for given number of milliseconds.
+ * Suspend program for given number of milliseconds.
  */
 sodna_Error sodna_sleep_ms(int ms);
 
 /**
- * \brief Write the RGB8 pixels of the current screenshot to user-provided
+ * Write the RGB8 pixels of the current screenshot to user-provided
  * memory.
  *
  * Returns the number of bytes written. If called with a NULL value will not
@@ -240,11 +273,6 @@ sodna_Error sodna_sleep_ms(int ms);
  * May return 0 if the backend implementation does not support screenshots.
  */
 size_t sodna_dump_screenshot(void* dest);
-
-/* Mouse buttons */
-#define SODNA_LEFT_BUTTON 0
-#define SODNA_MIDDLE_BUTTON 1
-#define SODNA_RIGHT_BUTTON 2
 
 /* Keyboard keys */
 #define SODNA_KEY_UNKNOWN          1
