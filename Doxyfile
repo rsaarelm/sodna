@@ -1,0 +1,4 @@
+PROJECT_NAME = "Sodna"
+INPUT = include/ src/sodna_util.c
+INPUT_ENCODING = UTF-8
+JAVADOC_AUTOBRIEF = true

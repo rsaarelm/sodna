@@ -6,3 +6,5 @@ sodna-demo
 Makefile
 obj/
 *.make
+html/
+latex/
