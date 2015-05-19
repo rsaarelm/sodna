@@ -17,7 +17,9 @@ static int g_rows;
 static int g_font_w;
 static int g_font_h;
 
+static sodna_Font default_font =
 #include "sodna_default_font.inc"
+;
 
 static size_t font_offset(uint8_t symbol, int x, int y) {
     return symbol * g_font_w * g_font_h + y * g_font_w + x;
@@ -27,19 +29,36 @@ static Uint32 convert_color(sodna_Color color) {
     return 0xff000000 | color.r << 16 | color.g << 8 | color.b;
 }
 
-static void init_font(uint8_t* font, int font_w, int font_h) {
-    int c, x, y;
-    for (c = 0; c < 256; c++) {
-        for (y = 0; y < font_h; y++) {
-            for (x = 0; x < font_w; x++) {
-                int src_x = x * default_font_w / font_w;
-                int src_y = y * default_font_h / font_h;
-                font[font_offset(c, x, y)] = default_font[
-                    ((c / 16) * default_font_h + src_y) * default_font_w * 16 +
-                    (c % 16) * default_font_w + src_x];
-            }
+static void grab_char(uint8_t c, const uint8_t* data, int pitch) {
+    int x, y;
+    for (y = 0; y < g_font_h; y++) {
+        for (x = 0; x < g_font_w; x++) {
+            g_font[font_offset(c, x, y)] = data[y * pitch + x];
         }
     }
+}
+
+static int init_font(const sodna_Font* font) {
+    int x = 0, row_offset = 0, c = 0;
+    int columns = font->pitch / font->char_width;
+    if (!font->char_height || !font->char_width || font->pitch < font->char_width)
+        return SODNA_ERROR;
+
+    free(g_font);
+    g_font = (uint8_t*)malloc(font->char_width * font->char_height * 256);
+    g_font_w = font->char_width;
+    g_font_h = font->char_height;
+
+    while (c < 256) {
+        for (x = 0; x < font->pitch; x += font->char_width) {
+            if (c >= 256)
+                break;
+            grab_char(c++, &font->pixel_data[row_offset + x], font->pitch);
+        }
+        row_offset += font->pitch * font->char_height;
+    }
+
+    return SODNA_OK;
 }
 
 static int window_w() {
@@ -51,28 +70,47 @@ static int window_h() {
 }
 
 sodna_Error sodna_init(
-        int font_width, int font_height,
         int num_columns, int num_rows,
-        const char* window_title) {
-    if (font_width < 1 || font_height < 1 || num_columns < 1 || num_rows < 1)
+        const char* window_title,
+        const sodna_Font* custom_font) {
+    if (num_columns < 1 || num_rows < 1)
         return 1;
 
     /* Already initialized. */
     if (g_win)
         return SODNA_ERROR;
 
+    g_columns = num_columns;
+    g_rows = num_rows;
+
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
         return SODNA_ERROR;
 
     g_win = SDL_CreateWindow(
             window_title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-            font_width * num_columns, font_height * num_rows, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+            window_w(), window_h(), SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
     if (!g_win)
         return SODNA_ERROR;
 
     g_rend = SDL_CreateRenderer(g_win, -1,
             SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-    sodna_resize(font_width, font_height, num_columns, num_rows);
+
+    init_font(custom_font ? custom_font : &default_font);
+
+    SDL_DestroyTexture(g_texture); g_texture = NULL;
+    g_texture = SDL_CreateTexture(
+            g_rend, SDL_PIXELFORMAT_ARGB8888,
+            SDL_TEXTUREACCESS_STREAMING,
+            window_w(), window_h());
+
+    free(g_pixels); g_pixels = NULL;
+    g_pixels = (Uint32*)malloc(window_w() * window_h() * 4);
+
+    free(g_cells); g_cells = NULL;
+    g_cells = (sodna_Cell*)malloc(sodna_width() * sodna_height() * sizeof(sodna_Cell));
+    memset(g_cells, 0, sodna_width() * sodna_height() * sizeof(sodna_Cell));
+
+    SDL_SetWindowSize(g_win, window_w(), window_h());
     /* Simple aspect-retaining scaling, but not pixel-perfect. */
     /* SDL_RenderSetLogicalSize(g_rend, window_w(), window_h()); */
 
@@ -87,67 +125,6 @@ void sodna_exit() {
     free(g_cells); g_cells = NULL;
     free(g_font); g_font = NULL;
     SDL_Quit();
-}
-
-int sodna_font_width() { return g_font_w; }
-
-int sodna_font_height() { return g_font_h; }
-
-void sodna_resize(int font_width, int font_height, int num_columns, int num_rows) {
-    assert(font_width > 0 && font_height > 0 && num_columns > 0 && num_rows > 0);
-    g_font_w = font_width;
-    g_font_h = font_height;
-    g_columns = num_columns;
-    g_rows = num_rows;
-
-    free(g_font); g_font = NULL;
-    g_font = (uint8_t*)malloc(g_font_w * g_font_h * 256);
-    init_font(g_font, g_font_w, g_font_h);
-
-    SDL_DestroyTexture(g_texture); g_texture = NULL;
-    g_texture = SDL_CreateTexture(
-            g_rend, SDL_PIXELFORMAT_ARGB8888,
-            SDL_TEXTUREACCESS_STREAMING,
-            window_w(), window_h());
-
-    free(g_pixels); g_pixels = NULL;
-    g_pixels = (Uint32*)malloc(window_w() * window_h() * 4);
-
-    free(g_cells); g_cells = NULL;
-    g_cells = (sodna_Cell*)malloc(sodna_width() * sodna_height() * sizeof(sodna_Cell));
-    memset(g_cells, 0, sodna_width() * sodna_height() * sizeof(sodna_Cell));
-    SDL_SetWindowSize(g_win, window_w(), window_h());
-}
-
-static void grab_char(uint8_t c, const uint8_t* data, int pitch) {
-    int x, y;
-    for (y = 0; y < g_font_h; y++) {
-        for (x = 0; x < g_font_w; x++) {
-            g_font[font_offset(c, x, y)] = data[y * pitch + x];
-        }
-    }
-}
-
-void sodna_load_font_data(
-        const uint8_t* pixels,
-        int pixels_width,
-        int pixels_height,
-        int first_char) {
-    int x, y, c = first_char;
-    int columns = pixels_width / g_font_w;
-    int rows = pixels_height / g_font_h;
-    if (columns <= 0 || rows <= 0)
-        return;
-    for (y = 0; y < rows; y++) {
-        for (x = 0; x < columns; x++) {
-            if (c >= 256)
-                return;
-            grab_char(c,
-                    &pixels[y * g_font_h * pixels_width + x * g_font_w],
-                    pixels_width);
-            ++c;
-        }
-    }
 }
 
 sodna_Cell* sodna_cells() {
@@ -669,19 +646,22 @@ sodna_Error sodna_sleep_ms(int ms) {
     return SODNA_OK;
 }
 
-size_t sodna_dump_screenshot(void* dest) {
+size_t sodna_dump_screenshot(uint8_t* out_pixels, int* out_width, int* out_height) {
     size_t pixels = window_w() * window_h();
-    if (dest) {
-        Uint8* bytes = (Uint8*)dest;
+    if (out_width)
+        *out_width = window_w();
+    if (out_height)
+        *out_height = window_h();
+    if (out_pixels) {
         int i;
         for (i = 0; i < pixels; i++) {
             Uint8 r, g, b;
             r = g_pixels[i] >> 16;
             g = g_pixels[i] >> 8;
             b = g_pixels[i];
-            bytes[i*3 + 0] = r;
-            bytes[i*3 + 1] = g;
-            bytes[i*3 + 2] = b;
+            out_pixels[i*3 + 0] = r;
+            out_pixels[i*3 + 1] = g;
+            out_pixels[i*3 + 2] = b;
         }
     }
     return pixels * 3;

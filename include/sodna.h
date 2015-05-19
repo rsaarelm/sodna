@@ -30,21 +30,38 @@ typedef enum {
 } sodna_Error;
 
 /**
+ * Custom font structure
+ *
+ */
+typedef struct {
+    /** Width of a single character in pixels */
+    uint8_t char_width;
+    /** Height of a single character in pixels */
+    uint8_t char_height;
+    /** Width of a row of pixels in the font data */
+    uint16_t pitch;
+    /**
+     * The font pixel data
+     *
+     * The font data is assumed to be a 8-bit grayscale image that
+     * contains a row-major 256 character monospace font sheet.
+     */
+     uint8_t pixel_data[];
+} sodna_Font;
+
+/**
  * Start the Sodna terminal.
  *
- * Start using Sodna by calling \a sodna_init. Specify the pixel font
- * dimensions to determine the shape of the characters and the size of
- * the font pixel sheet. Specify column and row count to determine how
- * much text will fit on the window.
+ * \param custom_font Optional custom font sheet. Can be null, in which
+ * case the default Sodna font will be used.
  *
  * \return SODNA_OK or SODNA_ERROR if opening the terminal failed.
  */
 sodna_Error sodna_init(
-        int font_width,
-        int font_height,
         int num_columns,
         int num_rows,
-        const char* window_title);
+        const char* window_title,
+        const sodna_Font* custom_font);
 
 /**
  * Color data structure
@@ -85,16 +102,6 @@ void sodna_flush();
  * Shut down the running terminal.
  */
 void sodna_exit();
-
-/**
- * Get the width of a single character in pixels.
- */
-int sodna_font_width();
-
-/**
- * Get the height of a single character in pixels.
- */
-int sodna_font_height();
 
 /**
  * Get the width in columns of the terminal window.
@@ -213,24 +220,6 @@ typedef union {
 #define SODNA_EVENT_MOUSE_EXIT      0x88
 
 /**
- * Resize the font and window during runtime.
- */
-void sodna_resize(int font_width, int font_height, int num_columns, int num_rows);
-
-/**
- * Load font pixel data from an 8-bit grayscale memory source.
- *
- * Rows of characters are treated as contiguous in the pixel data.
- * You can specify the character code of the first character in the
- * pixel data to only load in a part of the font.
- */
-void sodna_load_font_data(
-        const uint8_t* pixels,
-        int pixels_width,
-        int pixels_height,
-        int first_char);
-
-/**
  * Wait for an input event.
  *
  * \param timeout_ms If positive, indicate that the function should not wait
@@ -266,13 +255,14 @@ sodna_Error sodna_sleep_ms(int ms);
  * Write the RGB8 pixels of the current screenshot to user-provided
  * memory.
  *
- * Returns the number of bytes written. If called with a NULL value will not
- * write anything but will return the size of the screen dump anyway. The user
- * can use this to find out how much space to allocate.
+ * Returns the number of bytes written. If called with a NULL value will
+ * not write anything but will return the size of the screen dump
+ * anyway. The user can use this to find out how much space to allocate.
+ * Also returns the width and height of the window in pixels.
  *
  * May return 0 if the backend implementation does not support screenshots.
  */
-size_t sodna_dump_screenshot(void* dest);
+size_t sodna_dump_screenshot(uint8_t* out_pixels, int* out_width, int* out_height);
 
 /* Keyboard keys */
 #define SODNA_KEY_UNKNOWN          1
