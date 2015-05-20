@@ -200,8 +200,9 @@ int main(int argc, char* argv[]) {
     // Load a custom font.
     sodna_Font* font = NULL;
     sodna_load_font("font/8x14.png", &font);
-
     sodna_init(80, 25, "Sodna demo", font);
+    free(font);
+
     test_screen();
     chaos();
     simpleRl();
