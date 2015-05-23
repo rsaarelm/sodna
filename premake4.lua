@@ -1,14 +1,15 @@
 solution "sodna"
     configurations { "Debug", "Release" }
 
-    project "sodna-sdl2"
-        kind "StaticLib"
+    project "sodna"
+        kind "SharedLib"
         language "C"
 
         links { "m", "SDL2", }
 
         files {
-            "src/sodna_sdl2.c"
+            "src/sodna_sdl2.c",
+            "src/sodna_util.c",
         }
 
         includedirs { "include/" }
@@ -19,18 +20,6 @@ solution "sodna"
         configuration { "linux" }
             buildoptions { "`sdl2-config --cflags`" }
             linkoptions { "`sdl2-config --libs`" }
-
-    project "sodna-util"
-        kind "StaticLib"
-        language "C"
-
-        links { "m", }
-
-        includedirs { "include/" }
-
-        files {
-            "src/sodna_util.c"
-        }
 
     project "sodna-demo"
         kind "WindowedApp"
@@ -46,8 +35,7 @@ solution "sodna"
         links {
             "m",
             "SDL2",
-            "sodna-sdl2",
-            "sodna-util",
+            "sodna",
         }
 
         configuration { "windows" }
@@ -55,4 +43,4 @@ solution "sodna"
 
         configuration { "linux" }
             buildoptions { "`sdl2-config --cflags`" }
-            linkoptions { "`sdl2-config --libs`" }
+            linkoptions { "`sdl2-config --libs`", "-Wl,-rpath=." }
