@@ -151,12 +151,12 @@ void simpleRl() {
         int dx = 0, dy = 0;
         sodna_Event e;
         draw_map(x, y);
+        do {
+            e = sodna_poll_event();
+            if (e.type == SODNA_EVENT_CLOSE_WINDOW)
+                return;
+        } while (e.type != SODNA_EVENT_NONE && e.type != SODNA_EVENT_KEY_DOWN);
         sodna_flush();
-        e = sodna_wait_event(0);
-        if (e.type == SODNA_EVENT_CLOSE_WINDOW)
-            return;
-        if (e.type != SODNA_EVENT_KEY_DOWN)
-            continue;
 
         switch (e.key.hardware) {
             case SODNA_KEY_ESCAPE:
