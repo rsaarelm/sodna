@@ -199,29 +199,6 @@ static void pixel_perfect_target_rect(
     out_rect->y = (viewport.h - out_rect->h) / 2;
 }
 
-void sodna_flush() {
-    int x, y;
-    SDL_Rect target;
-    sodna_Cell* cells = sodna_cells();
-    /* XXX: Always repaints all cells, even if there was no change from
-     * previous frame. Could use a twin cell buffer and check for change
-     * from previous frame to see if we can skip draw_cell.
-     */
-    for (y = 0; y < sodna_height(); y++)
-        for (x = 0; x < sodna_width(); x++) {
-            sodna_Cell cell = cells[x + sodna_width() * y];
-            Uint32 fore = convert_color(cell.fore);
-            Uint32 back = convert_color(cell.back);
-            draw_cell(x * g_font_w, y * g_font_h, fore, back, cell.symbol);
-        }
-    SDL_RenderClear(g_rend);
-    SDL_UpdateTexture(g_texture, NULL, g_pixels, window_w() * sizeof(Uint32));
-
-    pixel_perfect_target_rect(&target, window_w(), window_h(), g_rend);
-    SDL_RenderCopy(g_rend, g_texture, NULL, &target);
-    SDL_RenderPresent(g_rend);
-}
-
 int sodna_width() { return g_columns; }
 
 int sodna_height() { return g_rows; }
@@ -602,6 +579,33 @@ static sodna_Event process_event(const SDL_Event* event) {
     }
 
     return ret;
+}
+
+void sodna_flush() {
+    int x, y;
+    SDL_Rect target;
+    sodna_Cell* cells = sodna_cells();
+    /* Flush the events the user didn't look into, there might be resize events. */
+    SDL_Event event;
+    while (SDL_PollEvent(&event)) { process_event(&event); }
+
+    /* XXX: Always repaints all cells, even if there was no change from
+     * previous frame. Could use a twin cell buffer and check for change
+     * from previous frame to see if we can skip draw_cell.
+     */
+    for (y = 0; y < sodna_height(); y++)
+        for (x = 0; x < sodna_width(); x++) {
+            sodna_Cell cell = cells[x + sodna_width() * y];
+            Uint32 fore = convert_color(cell.fore);
+            Uint32 back = convert_color(cell.back);
+            draw_cell(x * g_font_w, y * g_font_h, fore, back, cell.symbol);
+        }
+    SDL_RenderClear(g_rend);
+    SDL_UpdateTexture(g_texture, NULL, g_pixels, window_w() * sizeof(Uint32));
+
+    pixel_perfect_target_rect(&target, window_w(), window_h(), g_rend);
+    SDL_RenderCopy(g_rend, g_texture, NULL, &target);
+    SDL_RenderPresent(g_rend);
 }
 
 sodna_Event sodna_wait_event(int timeout_ms) {
